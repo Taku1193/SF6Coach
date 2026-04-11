@@ -11,6 +11,7 @@ import type {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  // フロント側の API 呼び出しはここに集約し、ヘッダーやエラー解釈を統一する。
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       "Content-Type": "application/json",
@@ -22,14 +23,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     const raw = await response.text();
     try {
+      // バックエンドは { message } 形式でエラーを返すため、まず JSON として解釈する。
       const parsed = JSON.parse(raw) as { message?: string };
       throw new Error(parsed.message || "API request failed.");
     } catch {
+      // JSON でない場合も、そのまま本文を表に出した方が調査しやすい。
       throw new Error(raw || "API request failed.");
     }
   }
 
   if (response.status === 204) {
+    // DELETE のように本文がないレスポンスにも対応する。
     return undefined as T;
   }
 
@@ -38,6 +42,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   listNotes(character: string) {
+    // 一覧 API は query string で使用キャラを渡す。
     const params = new URLSearchParams({ character });
     return request<NotesResponse>(`/notes?${params.toString()}`);
   },

@@ -80,6 +80,7 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
   }
 
   if (editMode) {
+    // 編集 UI はノート種別ごとに異なるため、詳細画面がそのまま分岐の入口も兼ねる。
     return note.noteType === "battleRecord" ? <BattleRecordFormPage mode="edit" /> : <VideoSummaryFormPage mode="edit" />;
   }
 

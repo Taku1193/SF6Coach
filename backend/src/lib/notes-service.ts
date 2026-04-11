@@ -15,6 +15,7 @@ export async function getNoteById(noteId: string): Promise<Note | null> {
 export async function createBattleRecordNote(input: unknown): Promise<BattleRecordNote> {
   const payload = validateCreateBattleRecordPayload(input);
   const now = new Date().toISOString();
+  // 作成時点で noteId / userId / timestamp を補完し、フロントからは業務入力だけ受け取る。
   const note: BattleRecordNote = {
     noteId: uuidv4(),
     userId: getAppUserId(),
@@ -30,6 +31,7 @@ export async function createBattleRecordNote(input: unknown): Promise<BattleReco
 export async function createVideoSummaryNote(input: unknown): Promise<VideoSummaryNote> {
   const payload = validateCreateVideoSummaryPayload(input);
   const now = new Date().toISOString();
+  // 動画要約ノートも対戦記録ノートと同じルールでメタ情報を付与する。
   const note: VideoSummaryNote = {
     noteId: uuidv4(),
     userId: getAppUserId(),
@@ -50,6 +52,7 @@ export async function updateNoteById(noteId: string, input: unknown): Promise<No
 
   const payload = validateUpdatePayload(input);
   const now = new Date().toISOString();
+  // noteType は作成後に変えず、種別ごとに更新可能な項目だけを上書きする。
   const updated =
     existing.noteType === "battleRecord"
       ? {

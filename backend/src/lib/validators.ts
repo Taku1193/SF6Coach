@@ -5,6 +5,7 @@ function assertString(value: unknown, fieldName: string): string {
     throw new Error(`${fieldName} は文字列で指定してください。`);
   }
 
+  // 入力段階で trim しておくと、以降の必須判定や保存時のゆれを減らせる。
   return value.trim();
 }
 
@@ -83,6 +84,7 @@ export function validateUpdatePayload(input: unknown): UpdateNotePayload {
   }
 
   const payload = input as Record<string, unknown>;
+  // 更新 API は partial update 前提なので、未指定項目は undefined のまま返す。
   return {
     character: typeof payload.character === "string" ? payload.character.trim() : undefined,
     opponentCharacter: typeof payload.opponentCharacter === "string" ? payload.opponentCharacter.trim() : undefined,
@@ -118,6 +120,7 @@ export function validateConsultationPayload(input: unknown): AiConsultationReque
     opponentCharacter: typeof payload.opponentCharacter === "string" ? payload.opponentCharacter.trim() : undefined,
     consultationText,
     tags: normalizeTags(payload.tags),
+    // noteTypes は許可した値だけを通し、不正な文字列は黙って捨てる。
     noteTypes: Array.isArray(payload.noteTypes)
       ? payload.noteTypes.filter((value): value is "battleRecord" | "videoSummary" => value === "battleRecord" || value === "videoSummary")
       : undefined

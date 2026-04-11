@@ -5,6 +5,7 @@ import { getCharacterNames } from "@shared/characters";
 export function CharacterSelectionPage() {
   const navigate = useNavigate();
   const characters = useMemo(() => getCharacterNames(), []);
+  // 前回選択したキャラがあれば初期表示に使い、再訪時の入力を減らす。
   const [character, setCharacter] = useState(window.localStorage.getItem("sf6.selectedCharacter") ?? "Luke");
 
   function handleSubmit(event: React.FormEvent) {
@@ -13,6 +14,7 @@ export function CharacterSelectionPage() {
       return;
     }
 
+    // このアプリでは認証の代わりに「現在見ているキャラ」を localStorage で管理している。
     window.localStorage.setItem("sf6.selectedCharacter", character.trim());
     navigate("/notes");
   }

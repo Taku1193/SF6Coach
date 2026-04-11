@@ -34,6 +34,7 @@ export function NotesListPage() {
       }
     }
 
+    // 選択キャラが決まっている時だけ API を叩く。
     if (character) {
       void load();
     }
@@ -44,6 +45,7 @@ export function NotesListPage() {
   }, [character]);
 
   const filteredNotes = useMemo(() => {
+    // API 側の取得条件は「キャラ」までにとどめ、種別やタグの絞り込みは画面側で即時反映する。
     return notes.filter((note) => {
       const matchesType = noteTypeFilter === "all" || note.noteType === noteTypeFilter;
       const matchesTag =

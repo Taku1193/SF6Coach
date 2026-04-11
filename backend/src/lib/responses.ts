@@ -8,6 +8,7 @@ const defaultHeaders = {
 };
 
 function response(statusCode: number, body?: unknown): APIGatewayProxyStructuredResultV2 {
+  // Lambda の返却形式をここで統一し、各 handler は status/body だけ意識すればよいようにする。
   return {
     statusCode,
     headers: defaultHeaders,

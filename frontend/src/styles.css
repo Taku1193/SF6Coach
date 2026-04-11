@@ -1,4 +1,5 @@
 :root {
+  /* 温かい紙面のようなトーンで、ノートアプリらしい軽さを出すための基本色。 */
   color-scheme: light;
   --bg: #f4efe6;
   --bg-strong: #fdf9f1;
@@ -23,6 +24,7 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--text);
+  /* 単色背景だと情報量が薄く見えるため、淡いグラデーションで奥行きを足す。 */
   background:
     radial-gradient(circle at top left, rgba(182, 72, 45, 0.18), transparent 28%),
     radial-gradient(circle at bottom right, rgba(156, 111, 44, 0.18), transparent 24%),
@@ -42,6 +44,7 @@ textarea {
 }
 
 .shell {
+  /* 画面が横に伸びすぎると読みにくいため、全体の本文幅をここで制御する。 */
   max-width: 1160px;
   margin: 0 auto;
   padding: 32px 16px 64px;
@@ -105,6 +108,7 @@ textarea {
 }
 
 .panel {
+  /* 主要な情報ブロックは panel に寄せ、画面全体の見た目を統一する。 */
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 28px;
@@ -114,6 +118,7 @@ textarea {
 }
 
 .hero-panel {
+  /* 初回導線だけは他の panel と差を付け、入口画面として認識しやすくする。 */
   min-height: 420px;
   display: grid;
   align-items: end;
@@ -146,6 +151,7 @@ textarea {
 .field input,
 .field select,
 .field textarea {
+  /* すべての入力 UI を同じ見た目に寄せ、画面ごとの差異を減らす。 */
   width: 100%;
   border-radius: 16px;
   border: 1px solid rgba(89, 64, 35, 0.18);
@@ -169,6 +175,7 @@ textarea {
 }
 
 .result-field {
+  /* 勝敗入力は「2-1 win」をそのまま視覚化できる並びにしている。 */
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1fr);
@@ -181,6 +188,7 @@ textarea {
 }
 
 .button-group {
+  /* ボタンは内容によって折り返せるようにし、狭い画面でも崩れないようにする。 */
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
@@ -232,6 +240,7 @@ textarea {
 }
 
 .notes-grid {
+  /* ノート件数が増えても自然に並ぶよう、カードは自動段組みで表示する。 */
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

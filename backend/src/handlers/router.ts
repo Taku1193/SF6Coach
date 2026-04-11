@@ -5,6 +5,8 @@ import { badRequest, created, noContent, notFound, ok, serverError } from "../li
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
   try {
+    // SAM の HttpApi では routeKey だけでは拾いづらいケースがあるため、
+    // method と rawPath の組み合わせで分岐する。
     const routeKey = `${event.requestContext.http.method} ${event.rawPath}`;
     const noteId = event.pathParameters?.noteId;
 
@@ -76,6 +78,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
 
 function parseBody(body: string | undefined): unknown {
   if (!body) {
+    // body がないリクエストも一律で object 扱いに寄せ、各 validator 側で必須判定する。
     return {};
   }
 

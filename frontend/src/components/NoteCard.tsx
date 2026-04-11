@@ -7,6 +7,7 @@ type NoteCardProps = {
 
 export function NoteCard({ note }: NoteCardProps) {
   return (
+    // 一覧カード全体をリンク化して、タップ/クリックの迷いを減らす。
     <Link className="note-card" to={`/notes/${note.noteId}`}>
       <div className="note-card-top">
         <span className={`note-type ${note.noteType}`}>{note.noteType === "battleRecord" ? "対戦記録" : "動画要約"}</span>

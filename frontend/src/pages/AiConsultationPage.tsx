@@ -31,6 +31,7 @@ export function AiConsultationPage() {
     try {
       setLoading(true);
       setError("");
+      // 相談ごとに前回結果を消し、ローディング中に古い内容が残らないようにする。
       setResponse(null);
       const noteTypes: NoteType[] =
         noteTypeScope === "both" ? ["battleRecord", "videoSummary"] : [noteTypeScope];
@@ -93,6 +94,7 @@ export function AiConsultationPage() {
       </div>
 
       {response ? (
+        // API は要約・改善点・次アクションを分けて返すため、画面も同じ粒度で表示する。
         <section className="panel stack">
           <div>
             <p className="eyebrow">Result</p>

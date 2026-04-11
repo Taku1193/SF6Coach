@@ -2,6 +2,7 @@ export const NOTE_TYPES = ["battleRecord", "videoSummary"] as const;
 
 export type NoteType = (typeof NOTE_TYPES)[number];
 
+// すべてのノートに共通するメタ情報。
 export type BaseNote = {
   noteId: string;
   userId: string;
@@ -29,6 +30,7 @@ export type VideoSummaryNote = BaseNote & {
 
 export type Note = BattleRecordNote | VideoSummaryNote;
 
+// 作成時 payload はフロントから送る業務入力だけを持ち、noteId などは backend が補完する。
 export type CreateBattleRecordPayload = {
   character: string;
   opponentCharacter: string;
@@ -80,10 +82,12 @@ export type CharacterOption = {
 };
 
 export function isBattleRecordNote(note: Note): note is BattleRecordNote {
+  // 画面側で noteType ごとに表示項目を切り替えるための type guard。
   return note.noteType === "battleRecord";
 }
 
 export function buildNoteTitle(note: Note): string {
+  // 一覧や詳細の見出しはこの関数に寄せ、表示ルールを散らさない。
   if (note.noteType === "battleRecord") {
     return `${note.opponentCharacter}戦 ${note.result}`;
   }

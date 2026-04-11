@@ -12,6 +12,7 @@ const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const tableName = () => getRequiredEnv("NOTES_TABLE_NAME");
 
 function toStoredNote(note: Note): StoredNote {
+  // 一覧取得はキャラ単位で行うため、GSI には userId#character をまとめて持たせる。
   return {
     ...note,
     gsi1pk: `${note.userId}#${note.character}`,
@@ -32,6 +33,7 @@ export async function listNotesByCharacter(character: string): Promise<Note[]> {
   });
 
   const result = await client.send(command);
+  // Query の結果順は GSI の sort key 依存だが、念のため updatedAt 降順で整えて返す。
   return ((result.Items ?? []) as Note[]).sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
@@ -68,6 +70,7 @@ export async function updatePersistedNote(note: Note): Promise<Note> {
         userId: stored.userId,
         noteId: stored.noteId
       },
+      // UpdateExpression の左辺に予約語が含まれても壊れないよう、属性名はすべてエイリアス化する。
       UpdateExpression:
         "SET #character = :character, #noteType = :noteType, #tags = :tags, #createdAt = :createdAt, #updatedAt = :updatedAt, #gsi1pk = :gsi1pk, #gsi1sk = :gsi1sk, #opponentCharacter = :opponentCharacter, #result = :result, #goodPoints = :goodPoints, #improvements = :improvements, #videoTitle = :videoTitle, #url = :url, #summary = :summary",
       ExpressionAttributeNames: {
@@ -114,6 +117,7 @@ export async function removeNote(noteId: string): Promise<boolean> {
     return false;
   }
 
+  // 先に存在確認しておくことで、削除結果を API では 404 として返せる。
   await client.send(
     new DeleteCommand({
       TableName: tableName(),

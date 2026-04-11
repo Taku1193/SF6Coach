@@ -76,6 +76,7 @@ export function VideoSummaryFormPage(_: VideoSummaryFormPageProps) {
     try {
       setLoading(true);
       setError("");
+      // URL は任意入力なので、空文字のままでも保存できるようにしている。
       const payload = {
         character: selectedCharacter,
         videoTitle: videoTitle.trim(),

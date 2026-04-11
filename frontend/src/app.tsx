@@ -12,6 +12,8 @@ function RequireCharacter({ children }: { children: ReactElement }) {
   const location = useLocation();
   const selectedCharacter = window.localStorage.getItem("sf6.selectedCharacter");
 
+  // この MVP は「選択中キャラ」を localStorage に持つ前提なので、
+  // 先にキャラ選択していない状態ではトップ画面へ戻す。
   if (!selectedCharacter && location.pathname !== "/") {
     return <Navigate to="/" replace />;
   }
@@ -22,6 +24,7 @@ function RequireCharacter({ children }: { children: ReactElement }) {
 export function App() {
   return (
     <Routes>
+      {/* キャラ選択だけは未選択状態でも開ける入口画面として扱う。 */}
       <Route
         path="/"
         element={
@@ -33,6 +36,7 @@ export function App() {
       <Route
         path="/notes"
         element={
+          // ノート関連画面はすべて、現在選択中のキャラに依存する。
           <RequireCharacter>
             <Layout>
               <NotesListPage />

@@ -20,8 +20,10 @@ function parseTags(value: string): string[] {
 }
 
 function parseResult(value: string): { myScore: string; opponentScore: string; outcome: string } {
+  // 保存形式は "2-1 win" の1文字列なので、編集画面では3つの入力値へ分解し直す。
   const match = value.trim().match(/^([0-2])-([0-2])\s+(win|lose|draw)$/i);
   if (!match) {
+    // 旧データや手入力データが崩れていても、編集画面自体は開けるよう安全側に倒す。
     return { myScore: "0", opponentScore: "0", outcome: "lose" };
   }
 
@@ -33,6 +35,7 @@ function parseResult(value: string): { myScore: string; opponentScore: string; o
 }
 
 function buildResult(myScore: string, opponentScore: string, outcome: string): string {
+  // バックエンドと既存データとの互換性を保つため、保存時は従来通り1文字列にまとめる。
   return `${myScore}-${opponentScore} ${outcome}`;
 }
 
@@ -105,6 +108,7 @@ export function BattleRecordFormPage(_: BattleRecordFormPageProps) {
     try {
       setLoading(true);
       setError("");
+      // 入力 UI は分かれているが、API には既存仕様どおりの payload を送る。
       const payload = {
         character,
         opponentCharacter: opponentCharacter.trim(),
@@ -152,6 +156,7 @@ export function BattleRecordFormPage(_: BattleRecordFormPageProps) {
         </label>
         <label className="field">
           <span>勝敗</span>
+          {/* 「2-1 win」の形を迷わず作れるよう、数値と結果を個別入力にしている。 */}
           <div className="result-field">
             <select aria-label="自分の勝利数" value={myResultScore} onChange={(event) => setMyResultScore(event.target.value)}>
               {RESULT_SCORES.map((score) => (

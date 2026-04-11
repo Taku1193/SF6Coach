@@ -1,5 +1,6 @@
 import type { CharacterOption } from "./types";
 
+// 画面に出す候補一覧の単一ソース。キャラ追加時はここを更新すればよい。
 export const SF6_CHARACTERS: CharacterOption[] = [
   { id: "luke", name: "Luke", released: true },
   { id: "jamie", name: "Jamie", released: true },
@@ -30,5 +31,6 @@ export const SF6_CHARACTERS: CharacterOption[] = [
 ];
 
 export function getCharacterNames(): string[] {
+  // UI 側は name だけ使うことが多いため、単純な配列へ変換する関数を用意している。
   return SF6_CHARACTERS.map((character) => character.name);
 }
