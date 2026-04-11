@@ -6,9 +6,11 @@ type TagInputProps = {
   placeholder?: string;
 };
 
+// タグを1件ずつ追加・削除する共通入力 UI を提供し、最終的なタグ配列を親へ返す。
 export function TagInput({ value, onChange, placeholder = "例: 対空" }: TagInputProps) {
   const [draftTag, setDraftTag] = useState("");
 
+  // 入力欄の文字列を1件のタグとして確定し、重複を避けつつ配列へ追加する。
   function handleAddTag() {
     const normalizedTag = draftTag.trim();
     if (!normalizedTag) {
@@ -25,11 +27,13 @@ export function TagInput({ value, onChange, placeholder = "例: 対空" }: TagIn
     setDraftTag("");
   }
 
+  // 指定したタグだけを一覧から取り除き、更新後の配列を親へ返す。
   function handleRemoveTag(tagToRemove: string) {
     // クリックしたタグだけを取り除き、残りの順序は維持する。
     onChange(value.filter((tag) => tag !== tagToRemove));
   }
 
+  // Enter キー押下時にも追加ボタンと同じ動きをさせ、入力体験を揃える。
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     // 1件ずつ追加する UI なので、Enter でも「追加」ボタンと同じ動きに寄せる。
     if (event.key !== "Enter") {

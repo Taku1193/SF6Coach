@@ -6,6 +6,7 @@ type LayoutProps = {
   hideNavigation?: boolean;
 };
 
+// 全画面共通のヘッダー、ナビゲーション、本文コンテナをまとめて提供する。
 export function Layout({ children, hideNavigation = false }: LayoutProps) {
   const location = useLocation();
   const selectedCharacter = window.localStorage.getItem("sf6.selectedCharacter");

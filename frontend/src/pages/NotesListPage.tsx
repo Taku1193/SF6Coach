@@ -4,6 +4,7 @@ import type { Note, NoteType } from "@shared/types";
 import { api } from "../api";
 import { NoteCard } from "../components/NoteCard";
 
+// 選択中キャラのノート一覧を取得し、画面内フィルタを適用して表示する。
 export function NotesListPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,6 +16,7 @@ export function NotesListPage() {
   useEffect(() => {
     let cancelled = false;
 
+    // API からノート一覧を取得し、状態へ反映する。
     async function load() {
       try {
         setLoading(true);

@@ -2,12 +2,14 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCharacterNames } from "@shared/characters";
 
+// 使用キャラを選択して保存し、ノート一覧の起点になるトップ画面を表示する。
 export function CharacterSelectionPage() {
   const navigate = useNavigate();
   const characters = useMemo(() => getCharacterNames(), []);
   // 前回選択したキャラがあれば初期表示に使い、再訪時の入力を減らす。
   const [character, setCharacter] = useState(window.localStorage.getItem("sf6.selectedCharacter") ?? "Luke");
 
+  // 選択したキャラを localStorage に保存し、以後の画面が参照できるようにする。
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!character.trim()) {

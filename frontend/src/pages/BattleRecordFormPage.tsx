@@ -12,6 +12,7 @@ type BattleRecordFormPageProps = {
 const RESULT_SCORES = ["0", "1", "2"] as const;
 const RESULT_OUTCOMES = ["win", "lose", "draw"] as const;
 
+// 保存済みの "2-1 win" 形式を、編集画面で扱う3つの入力値へ分解する。
 function parseResult(value: string): { myScore: string; opponentScore: string; outcome: string } {
   // 保存形式は "2-1 win" の1文字列なので、編集画面では3つの入力値へ分解し直す。
   const match = value.trim().match(/^([0-2])-([0-2])\s+(win|lose|draw)$/i);
@@ -27,11 +28,13 @@ function parseResult(value: string): { myScore: string; opponentScore: string; o
   };
 }
 
+// 画面上の3つの勝敗入力を、保存互換の "2-1 win" 形式へ組み立てる。
 function buildResult(myScore: string, opponentScore: string, outcome: string): string {
   // バックエンドと既存データとの互換性を保つため、保存時は従来通り1文字列にまとめる。
   return `${myScore}-${opponentScore} ${outcome}`;
 }
 
+// 対戦記録ノートの作成・編集フォームを表示し、保存用 payload を組み立てて送信する。
 export function BattleRecordFormPage(_: BattleRecordFormPageProps) {
   const navigate = useNavigate();
   const { noteId } = useParams();
@@ -56,6 +59,7 @@ export function BattleRecordFormPage(_: BattleRecordFormPageProps) {
 
     let cancelled = false;
 
+    // 編集時に既存ノートを読み込み、フォーム初期値として反映する。
     async function load(resolvedNoteId: string) {
       try {
         setLoading(true);
@@ -90,6 +94,7 @@ export function BattleRecordFormPage(_: BattleRecordFormPageProps) {
     };
   }, [noteId]);
 
+  // フォーム入力を検証し、作成または更新 API へ送信する。
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 

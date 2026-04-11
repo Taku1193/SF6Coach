@@ -1,5 +1,6 @@
 import type { AiConsultationRequest, CreateBattleRecordPayload, CreateVideoSummaryPayload, UpdateNotePayload } from "@shared/types";
 
+// 指定値が文字列であることを確認し、前後空白を除いた文字列を返す。
 function assertString(value: unknown, fieldName: string): string {
   if (typeof value !== "string") {
     throw new Error(`${fieldName} は文字列で指定してください。`);
@@ -9,6 +10,7 @@ function assertString(value: unknown, fieldName: string): string {
   return value.trim();
 }
 
+// タグ入力を string 配列へ正規化し、非文字列や空文字を取り除く。
 function normalizeTags(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
@@ -20,6 +22,7 @@ function normalizeTags(value: unknown): string[] {
     .filter(Boolean);
 }
 
+// 対戦記録ノート作成時の入力を検証し、保存可能な payload へ整形する。
 export function validateCreateBattleRecordPayload(input: unknown): CreateBattleRecordPayload {
   if (!input || typeof input !== "object") {
     throw new Error("対戦記録ノートの入力が不正です。");
@@ -50,6 +53,7 @@ export function validateCreateBattleRecordPayload(input: unknown): CreateBattleR
   };
 }
 
+// 動画要約ノート作成時の入力を検証し、保存可能な payload へ整形する。
 export function validateCreateVideoSummaryPayload(input: unknown): CreateVideoSummaryPayload {
   if (!input || typeof input !== "object") {
     throw new Error("動画要約ノートの入力が不正です。");
@@ -78,6 +82,7 @@ export function validateCreateVideoSummaryPayload(input: unknown): CreateVideoSu
   };
 }
 
+// 更新 API の入力を partial payload として整形し、未指定項目は undefined で返す。
 export function validateUpdatePayload(input: unknown): UpdateNotePayload {
   if (!input || typeof input !== "object") {
     throw new Error("更新データが不正です。");
@@ -98,6 +103,7 @@ export function validateUpdatePayload(input: unknown): UpdateNotePayload {
   };
 }
 
+// AI 相談の入力を検証し、使用可能な noteTypes だけを残して返す。
 export function validateConsultationPayload(input: unknown): AiConsultationRequest {
   if (!input || typeof input !== "object") {
     throw new Error("AI相談の入力が不正です。");

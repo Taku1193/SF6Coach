@@ -81,11 +81,13 @@ export type CharacterOption = {
   released: boolean;
 };
 
+// Note が battleRecord かどうかを判定し、分岐後に型を絞り込めるようにする。
 export function isBattleRecordNote(note: Note): note is BattleRecordNote {
   // 画面側で noteType ごとに表示項目を切り替えるための type guard。
   return note.noteType === "battleRecord";
 }
 
+// ノート種別に応じて、一覧や詳細で使う見出し文字列を組み立てる。
 export function buildNoteTitle(note: Note): string {
   // 一覧や詳細の見出しはこの関数に寄せ、表示ルールを散らさない。
   if (note.noteType === "battleRecord") {

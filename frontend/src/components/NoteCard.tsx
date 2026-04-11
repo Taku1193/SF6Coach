@@ -5,6 +5,7 @@ type NoteCardProps = {
   note: Note;
 };
 
+// ノート一覧で使うカード表示を行い、クリック時に詳細画面へ遷移させる。
 export function NoteCard({ note }: NoteCardProps) {
   return (
     // 一覧カード全体をリンク化して、タップ/クリックの迷いを減らす。

@@ -8,6 +8,7 @@ import { NoteDetailPage } from "./pages/NoteDetailPage";
 import { AiConsultationPage } from "./pages/AiConsultationPage";
 import { Layout } from "./components/Layout";
 
+// 使用キャラが未選択の状態では、対象画面へ入らせずトップへ戻すガードを行う。
 function RequireCharacter({ children }: { children: ReactElement }) {
   const location = useLocation();
   const selectedCharacter = window.localStorage.getItem("sf6.selectedCharacter");
@@ -21,6 +22,7 @@ function RequireCharacter({ children }: { children: ReactElement }) {
   return children;
 }
 
+// ルーティング全体を定義し、各画面を Layout とキャラ選択ガード付きで組み立てる。
 export function App() {
   return (
     <Routes>

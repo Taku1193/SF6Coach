@@ -10,6 +10,7 @@ import type {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
+// API の共通 fetch 処理をまとめ、成功時の JSON 解析と失敗時の message 抽出を揃える。
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   // フロント側の API 呼び出しはここに集約し、ヘッダーやエラー解釈を統一する。
   const response = await fetch(`${API_BASE_URL}${path}`, {

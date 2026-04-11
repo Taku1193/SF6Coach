@@ -3,6 +3,7 @@ import type { AiConsultationResponse, NoteType } from "@shared/types";
 import { api } from "../api";
 import { TagInput } from "../components/TagInput";
 
+// 条件付きで AI 相談を実行し、返ってきた要約・改善点・次アクションを表示する。
 export function AiConsultationPage() {
   const selectedCharacter = window.localStorage.getItem("sf6.selectedCharacter") ?? "Luke";
   const [opponentCharacter, setOpponentCharacter] = useState("");
@@ -13,6 +14,7 @@ export function AiConsultationPage() {
   const [error, setError] = useState("");
   const [response, setResponse] = useState<AiConsultationResponse | null>(null);
 
+  // 相談条件を payload にまとめ、AI 相談 API を呼び出して結果を反映する。
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 

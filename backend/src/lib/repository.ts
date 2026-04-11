@@ -11,6 +11,7 @@ type StoredNote = Note & {
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const tableName = () => getRequiredEnv("NOTES_TABLE_NAME");
 
+// アプリ内ノートを DynamoDB 保存形式へ変換し、一覧用 GSI キーも補完する。
 function toStoredNote(note: Note): StoredNote {
   // 一覧取得はキャラ単位で行うため、GSI には userId#character をまとめて持たせる。
   return {
@@ -20,6 +21,7 @@ function toStoredNote(note: Note): StoredNote {
   };
 }
 
+// キャラ単位の GSI を使ってノート一覧を取得し、更新日時の降順で返す。
 export async function listNotesByCharacter(character: string): Promise<Note[]> {
   const userId = getAppUserId();
   const command = new QueryCommand({
@@ -37,6 +39,7 @@ export async function listNotesByCharacter(character: string): Promise<Note[]> {
   return ((result.Items ?? []) as Note[]).sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
+// 主キー userId + noteId でノートを 1 件取得し、存在しない場合は null を返す。
 export async function getNote(noteId: string): Promise<Note | null> {
   const command = new GetCommand({
     TableName: tableName(),
@@ -50,6 +53,7 @@ export async function getNote(noteId: string): Promise<Note | null> {
   return (result.Item as Note | undefined) ?? null;
 }
 
+// ノート 1 件をそのまま Put し、新規作成用の永続化処理として使う。
 export async function putNote(note: Note): Promise<Note> {
   await client.send(
     new PutCommand({
@@ -61,6 +65,7 @@ export async function putNote(note: Note): Promise<Note> {
   return note;
 }
 
+// 既存ノートを UpdateExpression で上書きし、GSI 用の派生属性も含めて同期させる。
 export async function updatePersistedNote(note: Note): Promise<Note> {
   const stored = toStoredNote(note);
   await client.send(
@@ -111,6 +116,7 @@ export async function updatePersistedNote(note: Note): Promise<Note> {
   return note;
 }
 
+// ノート削除前に存在確認を行い、API で 404 判定できるよう boolean を返す。
 export async function removeNote(noteId: string): Promise<boolean> {
   const existing = await getNote(noteId);
   if (!existing) {

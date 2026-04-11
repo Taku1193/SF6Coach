@@ -9,10 +9,12 @@ type ScoredNote = {
   score: number;
 };
 
+// 相談文やノート本文を簡易トークンへ分解し、関連度計算に使える形へ揃える。
 function tokenize(text: string): string[] {
   return (text.match(/[A-Za-z0-9\u3040-\u30ff\u4e00-\u9faf._-]+/g) ?? []).map((token) => token.toLowerCase());
 }
 
+// 相談条件に近いノートだけをスコアリングして抽出し、AI に渡す参照ノートを絞り込む。
 function scoreNotes(request: AiConsultationRequest, notes: Note[]): Note[] {
   const requestKeywords = tokenize(request.consultationText);
 
@@ -50,6 +52,7 @@ function scoreNotes(request: AiConsultationRequest, notes: Note[]): Note[] {
     .map((entry) => entry.note);
 }
 
+// 選ばれたノート群を AI へ渡すためのプロンプト文字列へ整形する。
 function buildPrompt(request: AiConsultationRequest, notes: Note[]): string {
   // AIが参照しやすいように、ノート種別ごとに必要な項目だけをテキスト化する。
   const references = notes.map((note, index) => {
@@ -92,6 +95,7 @@ tags: ${note.tags.join(", ")}`;
 ${references.join("\n\n")}`;
 }
 
+// OpenAI から返った JSON をアプリの相談レスポンス型へ変換し、不完全な結果を弾く。
 function parseJsonResult(content: string): AiConsultationResponse {
   const parsed = JSON.parse(content) as AiConsultationResponse;
 
@@ -111,6 +115,7 @@ function parseJsonResult(content: string): AiConsultationResponse {
   return result;
 }
 
+// OpenAI API を呼び出し、ノート根拠付きの相談結果を JSON スキーマで受け取る。
 async function askOpenAI(request: AiConsultationRequest, notes: Note[]): Promise<AiConsultationResponse> {
   const client = new OpenAI({
     apiKey: getRequiredEnv("OPENAI_API_KEY")
@@ -173,6 +178,7 @@ async function askOpenAI(request: AiConsultationRequest, notes: Note[]): Promise
   return parseJsonResult(content);
 }
 
+// OpenAI 側で失敗した場合でも、参照ノートだけから最低限の相談結果を組み立てて返す。
 function fallbackConsultation(notes: Note[]): AiConsultationResponse {
   // OpenAI呼び出しやJSON解析に失敗しても、参照ノートから最低限の結果を返す。
   return {
@@ -183,6 +189,7 @@ function fallbackConsultation(notes: Note[]): AiConsultationResponse {
   };
 }
 
+// 入力検証、参照ノート抽出、OpenAI 呼び出し、フォールバックまでをまとめて実行する。
 export async function consultWithNotes(input: unknown): Promise<AiConsultationResponse> {
   const request = validateConsultationPayload(input);
   const notes = await listNotesByCharacter(request.character);

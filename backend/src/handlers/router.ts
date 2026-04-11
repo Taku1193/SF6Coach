@@ -3,6 +3,7 @@ import { createBattleRecordNote, createVideoSummaryNote, deleteNoteById, getNote
 import { consultWithNotes } from "../lib/consultation-service";
 import { badRequest, created, noContent, notFound, ok, serverError } from "../lib/responses";
 
+// 受け取った HTTP リクエストを各サービス処理へ振り分け、統一レスポンスで返す。
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
   try {
     // SAM の HttpApi では routeKey だけでは拾いづらいケースがあるため、
@@ -76,6 +77,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   }
 }
 
+// API Gateway から渡された JSON body を object へ変換し、未指定時は空 object を返す。
 function parseBody(body: string | undefined): unknown {
   if (!body) {
     // body がないリクエストも一律で object 扱いに寄せ、各 validator 側で必須判定する。

@@ -8,6 +8,7 @@ type VideoSummaryFormPageProps = {
   mode: "create" | "edit";
 };
 
+// 動画要約ノートの作成・編集フォームを表示し、保存用 payload を組み立てて送信する。
 export function VideoSummaryFormPage(_: VideoSummaryFormPageProps) {
   const navigate = useNavigate();
   const { noteId } = useParams();
@@ -27,6 +28,7 @@ export function VideoSummaryFormPage(_: VideoSummaryFormPageProps) {
 
     let cancelled = false;
 
+    // 編集対象の動画要約ノートを読み込み、フォームへ反映する。
     async function load(resolvedNoteId: string) {
       try {
         setLoading(true);
@@ -58,6 +60,7 @@ export function VideoSummaryFormPage(_: VideoSummaryFormPageProps) {
     };
   }, [noteId]);
 
+  // 入力済みの動画情報とタグをまとめ、作成または更新 API へ送信する。
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 

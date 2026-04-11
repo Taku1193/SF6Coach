@@ -9,6 +9,7 @@ type NoteDetailPageProps = {
   editMode?: boolean;
 };
 
+// ノート詳細の表示と削除を担当し、editMode 時は種別別の編集フォームへ切り替える。
 export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
   const { noteId } = useParams();
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
   useEffect(() => {
     let cancelled = false;
 
+    // noteId に対応するノートを取得し、詳細表示または編集画面の土台にする。
     async function load() {
       if (!noteId) {
         return;
@@ -49,6 +51,7 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
     };
   }, [noteId]);
 
+  // ユーザー確認後にノートを削除し、一覧画面へ戻す。
   async function handleDelete() {
     if (!noteId) {
       return;

@@ -30,6 +30,7 @@ export const SF6_CHARACTERS: CharacterOption[] = [
   { id: "elena", name: "Elena", released: true }
 ];
 
+// キャラ候補一覧から表示名だけを取り出し、select や datalist に渡しやすい形へする。
 export function getCharacterNames(): string[] {
   // UI 側は name だけ使うことが多いため、単純な配列へ変換する関数を用意している。
   return SF6_CHARACTERS.map((character) => character.name);

@@ -4,14 +4,17 @@ import { getAppUserId } from "./env";
 import { getNote, listNotesByCharacter, putNote, removeNote, updatePersistedNote } from "./repository";
 import { validateCreateBattleRecordPayload, validateCreateVideoSummaryPayload, validateUpdatePayload } from "./validators";
 
+// 指定キャラに紐づくノート一覧を repository から取得して返す。
 export async function listNotes(character: string): Promise<Note[]> {
   return listNotesByCharacter(character);
 }
 
+// noteId に対応するノートを 1 件取得し、存在しなければ null を返す。
 export async function getNoteById(noteId: string): Promise<Note | null> {
   return getNote(noteId);
 }
 
+// 対戦記録ノートを新規作成し、ID や timestamp を補完した上で保存する。
 export async function createBattleRecordNote(input: unknown): Promise<BattleRecordNote> {
   const payload = validateCreateBattleRecordPayload(input);
   const now = new Date().toISOString();
@@ -28,6 +31,7 @@ export async function createBattleRecordNote(input: unknown): Promise<BattleReco
   return (await putNote(note)) as BattleRecordNote;
 }
 
+// 動画要約ノートを新規作成し、ID や timestamp を補完した上で保存する。
 export async function createVideoSummaryNote(input: unknown): Promise<VideoSummaryNote> {
   const payload = validateCreateVideoSummaryPayload(input);
   const now = new Date().toISOString();
@@ -44,6 +48,7 @@ export async function createVideoSummaryNote(input: unknown): Promise<VideoSumma
   return (await putNote(note)) as VideoSummaryNote;
 }
 
+// 既存ノートの種別を維持したまま、更新可能な項目だけを上書きして保存する。
 export async function updateNoteById(noteId: string, input: unknown): Promise<Note | null> {
   const existing = await getNote(noteId);
   if (!existing) {
@@ -78,6 +83,7 @@ export async function updateNoteById(noteId: string, input: unknown): Promise<No
   return updatePersistedNote(updated);
 }
 
+// noteId に対応するノートを削除し、成否を boolean で返す。
 export async function deleteNoteById(noteId: string): Promise<boolean> {
   return removeNote(noteId);
 }
