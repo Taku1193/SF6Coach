@@ -1,0 +1,18 @@
+version = 0.1
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.deploy.parameters]
+stack_name = "sf6-coach-mvp"
+s3_bucket = "sf6-coach-sam-artifacts-yanase-20260408"
+s3_prefix = "sf6-coach-mvp"
+region = "ap-northeast-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "AppUserId=\"local-user\" OpenAiApiKey=\"dummy-for-initial-deploy\" OpenAiModel=\"gpt-4.1-mini\" FrontendOrigin=\"*\""
+image_repositories = []
+
+[default.global.parameters]
+region = "ap-northeast-1"

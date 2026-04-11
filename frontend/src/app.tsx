@@ -1,0 +1,95 @@
+import type { ReactElement } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { CharacterSelectionPage } from "./pages/CharacterSelectionPage";
+import { NotesListPage } from "./pages/NotesListPage";
+import { BattleRecordFormPage } from "./pages/BattleRecordFormPage";
+import { VideoSummaryFormPage } from "./pages/VideoSummaryFormPage";
+import { NoteDetailPage } from "./pages/NoteDetailPage";
+import { AiConsultationPage } from "./pages/AiConsultationPage";
+import { Layout } from "./components/Layout";
+
+function RequireCharacter({ children }: { children: ReactElement }) {
+  const location = useLocation();
+  const selectedCharacter = window.localStorage.getItem("sf6.selectedCharacter");
+
+  if (!selectedCharacter && location.pathname !== "/") {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
+export function App() {
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <Layout hideNavigation>
+            <CharacterSelectionPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/notes"
+        element={
+          <RequireCharacter>
+            <Layout>
+              <NotesListPage />
+            </Layout>
+          </RequireCharacter>
+        }
+      />
+      <Route
+        path="/notes/new/battle-record"
+        element={
+          <RequireCharacter>
+            <Layout>
+              <BattleRecordFormPage mode="create" />
+            </Layout>
+          </RequireCharacter>
+        }
+      />
+      <Route
+        path="/notes/new/video-summary"
+        element={
+          <RequireCharacter>
+            <Layout>
+              <VideoSummaryFormPage mode="create" />
+            </Layout>
+          </RequireCharacter>
+        }
+      />
+      <Route
+        path="/notes/:noteId"
+        element={
+          <RequireCharacter>
+            <Layout>
+              <NoteDetailPage />
+            </Layout>
+          </RequireCharacter>
+        }
+      />
+      <Route
+        path="/notes/:noteId/edit"
+        element={
+          <RequireCharacter>
+            <Layout>
+              <NoteDetailPage editMode />
+            </Layout>
+          </RequireCharacter>
+        }
+      />
+      <Route
+        path="/consultation"
+        element={
+          <RequireCharacter>
+            <Layout>
+              <AiConsultationPage />
+            </Layout>
+          </RequireCharacter>
+        }
+      />
+    </Routes>
+  );
+}

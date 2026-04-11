@@ -1,0 +1,205 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { getCharacterNames } from "@shared/characters";
+import { isBattleRecordNote } from "@shared/types";
+import { api } from "../api";
+import { TagInput } from "../components/TagInput";
+
+type BattleRecordFormPageProps = {
+  mode: "create" | "edit";
+};
+
+const RESULT_SCORES = ["0", "1", "2"] as const;
+const RESULT_OUTCOMES = ["win", "lose", "draw"] as const;
+
+function parseTags(value: string): string[] {
+  return value
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
+function parseResult(value: string): { myScore: string; opponentScore: string; outcome: string } {
+  const match = value.trim().match(/^([0-2])-([0-2])\s+(win|lose|draw)$/i);
+  if (!match) {
+    return { myScore: "0", opponentScore: "0", outcome: "lose" };
+  }
+
+  return {
+    myScore: match[1],
+    opponentScore: match[2],
+    outcome: match[3].toLowerCase()
+  };
+}
+
+function buildResult(myScore: string, opponentScore: string, outcome: string): string {
+  return `${myScore}-${opponentScore} ${outcome}`;
+}
+
+export function BattleRecordFormPage(_: BattleRecordFormPageProps) {
+  const navigate = useNavigate();
+  const { noteId } = useParams();
+  const selectedCharacter = window.localStorage.getItem("sf6.selectedCharacter") ?? "Luke";
+  const characterNames = useMemo(() => getCharacterNames(), []);
+  const [character] = useState(selectedCharacter);
+  const [opponentCharacter, setOpponentCharacter] = useState("");
+  const [myResultScore, setMyResultScore] = useState("0");
+  const [opponentResultScore, setOpponentResultScore] = useState("0");
+  const [resultOutcome, setResultOutcome] = useState("lose");
+  const [goodPoints, setGoodPoints] = useState("");
+  const [improvements, setImprovements] = useState("");
+  const [tagsInput, setTagsInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const currentNoteId = noteId;
+    if (!currentNoteId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function load(resolvedNoteId: string) {
+      try {
+        setLoading(true);
+        const response = await api.getNote(resolvedNoteId);
+        if (cancelled || !isBattleRecordNote(response.note)) {
+          return;
+        }
+
+        setOpponentCharacter(response.note.opponentCharacter);
+        const parsedResult = parseResult(response.note.result);
+        setMyResultScore(parsedResult.myScore);
+        setOpponentResultScore(parsedResult.opponentScore);
+        setResultOutcome(parsedResult.outcome);
+        setGoodPoints(response.note.goodPoints);
+        setImprovements(response.note.improvements);
+        setTagsInput(response.note.tags.join(", "));
+      } catch (loadError) {
+        if (!cancelled) {
+          setError(loadError instanceof Error ? loadError.message : "ノート取得に失敗しました。");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load(currentNoteId);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [noteId]);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+
+    if (!opponentCharacter.trim()) {
+      setError("対戦相手キャラと勝敗は必須です。");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      const payload = {
+        character,
+        opponentCharacter: opponentCharacter.trim(),
+        result: buildResult(myResultScore, opponentResultScore, resultOutcome),
+        goodPoints: goodPoints.trim(),
+        improvements: improvements.trim(),
+        tags: parseTags(tagsInput)
+      };
+
+      const response = noteId ? await api.updateNote(noteId, payload) : await api.createBattleRecord(payload);
+      navigate(`/notes/${response.note.noteId}`);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "保存に失敗しました。");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <section className="panel">
+      <div className="section-header">
+        <div>
+          <p className="eyebrow">Battle Record</p>
+          <h2>{noteId ? "対戦記録ノートを編集" : "対戦記録ノートを作成"}</h2>
+        </div>
+      </div>
+      <form className="stack" onSubmit={handleSubmit}>
+        <label className="field">
+          <span>使用キャラ</span>
+          <input value={character} disabled />
+        </label>
+        <label className="field">
+          <span>対戦相手キャラ</span>
+          <input
+            list="sf6-character-options"
+            value={opponentCharacter}
+            onChange={(event) => setOpponentCharacter(event.target.value)}
+            placeholder="JP"
+          />
+          <datalist id="sf6-character-options">
+            {characterNames.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
+        </label>
+        <label className="field">
+          <span>勝敗</span>
+          <div className="result-field">
+            <select aria-label="自分の勝利数" value={myResultScore} onChange={(event) => setMyResultScore(event.target.value)}>
+              {RESULT_SCORES.map((score) => (
+                <option key={score} value={score}>
+                  {score}
+                </option>
+              ))}
+            </select>
+            <span className="result-separator">-</span>
+            <select
+              aria-label="相手の勝利数"
+              value={opponentResultScore}
+              onChange={(event) => setOpponentResultScore(event.target.value)}
+            >
+              {RESULT_SCORES.map((score) => (
+                <option key={score} value={score}>
+                  {score}
+                </option>
+              ))}
+            </select>
+            <select value={resultOutcome} onChange={(event) => setResultOutcome(event.target.value)}>
+              {RESULT_OUTCOMES.map((outcome) => (
+                <option key={outcome} value={outcome}>
+                  {outcome}
+                </option>
+              ))}
+            </select>
+          </div>
+        </label>
+        <label className="field">
+          <span>良かったところ</span>
+          <textarea value={goodPoints} onChange={(event) => setGoodPoints(event.target.value)} rows={4} />
+        </label>
+        <label className="field">
+          <span>改善点</span>
+          <textarea value={improvements} onChange={(event) => setImprovements(event.target.value)} rows={5} />
+        </label>
+        <TagInput value={tagsInput} onChange={setTagsInput} />
+        {error ? <div className="status error">{error}</div> : null}
+        <div className="button-group">
+          <button className="primary-button" disabled={loading} type="submit">
+            {loading ? "保存中..." : "保存する"}
+          </button>
+          <button className="secondary-button" onClick={() => navigate(-1)} type="button">
+            キャンセル
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}

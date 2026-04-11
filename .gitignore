@@ -1,0 +1,8 @@
+node_modules/
+.aws-sam/
+frontend/dist/
+backend/dist/
+.codex
+.env
+frontend/.env
+review.txt

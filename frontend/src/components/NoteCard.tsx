@@ -1,0 +1,21 @@
+import { Link } from "react-router-dom";
+import { buildNoteTitle, type Note } from "@shared/types";
+
+type NoteCardProps = {
+  note: Note;
+};
+
+export function NoteCard({ note }: NoteCardProps) {
+  return (
+    <Link className="note-card" to={`/notes/${note.noteId}`}>
+      <div className="note-card-top">
+        <span className={`note-type ${note.noteType}`}>{note.noteType === "battleRecord" ? "対戦記録" : "動画要約"}</span>
+        <time>{new Date(note.updatedAt).toLocaleString("ja-JP")}</time>
+      </div>
+      <h3>{buildNoteTitle(note)}</h3>
+      <div className="tag-list">
+        {note.tags.length === 0 ? <span className="muted">タグなし</span> : note.tags.map((tag) => <span key={tag}>{tag}</span>)}
+      </div>
+    </Link>
+  );
+}

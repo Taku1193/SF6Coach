@@ -1,0 +1,17 @@
+{
+  "version": "2.0",
+  "routeKey": "POST /ai-consultation",
+  "rawPath": "/ai-consultation",
+  "rawQueryString": "",
+  "headers": {
+    "content-type": "application/json"
+  },
+  "requestContext": {
+    "http": {
+      "method": "POST",
+      "path": "/ai-consultation"
+    }
+  },
+  "body": "{\"character\":\"Luke\",\"opponentCharacter\":\"JP\",\"consultationText\":\"JP戦でヴィーハト設置後に毎回崩される。何を意識すべき？\",\"tags\":[\"設置対応\"],\"noteTypes\":[\"battleRecord\",\"videoSummary\"]}",
+  "isBase64Encoded": false
+}

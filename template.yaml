@@ -1,0 +1,237 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: SF6 Coach MVP stack
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Timeout: 30
+    MemorySize: 512
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        APP_USER_ID: !Ref AppUserId
+        NOTES_TABLE_NAME: !Ref NotesTable
+        OPENAI_API_KEY: !Ref OpenAiApiKey
+        OPENAI_MODEL: !Ref OpenAiModel
+
+Parameters:
+  AppUserId:
+    Type: String
+    Default: local-user
+    Description: Fixed MVP user id stored with all notes.
+  OpenAiApiKey:
+    Type: String
+    NoEcho: true
+    Description: OpenAI API key used by the consultation Lambda.
+  OpenAiModel:
+    Type: String
+    Default: gpt-4.1-mini
+    Description: OpenAI model name used for AI consultation.
+  FrontendOrigin:
+    Type: String
+    Default: "*"
+    Description: Allowed browser origin for API CORS. Use * for MVP or set your CloudFront URL later.
+
+Resources:
+  Sf6CoachApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref FrontendOrigin
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+
+  NotesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: noteId
+          AttributeType: S
+        - AttributeName: gsi1pk
+          AttributeType: S
+        - AttributeName: gsi1sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: noteId
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: gsi1pk
+              KeyType: HASH
+            - AttributeName: gsi1sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  FrontendOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub "${AWS::StackName}-frontend-oac"
+        Description: Access control for SF6 Coach frontend bucket
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  FrontendDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub "${AWS::StackName} frontend distribution"
+        DefaultRootObject: index.html
+        HttpVersion: http2
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: FrontendS3Origin
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt FrontendOriginAccessControl.Id
+            S3OriginConfig: {}
+        DefaultCacheBehavior:
+          TargetOriginId: FrontendS3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowCloudFrontServicePrincipalReadOnly
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action:
+              - s3:GetObject
+            Resource: !Sub "${FrontendBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${FrontendDistribution}"
+
+  Sf6CoachApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: backend/src/index.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref NotesTable
+      Events:
+        ListNotes:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Sf6CoachApi
+            Method: GET
+            Path: /notes
+        GetNote:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Sf6CoachApi
+            Method: GET
+            Path: /notes/{noteId}
+        CreateBattleRecord:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Sf6CoachApi
+            Method: POST
+            Path: /notes/battle-record
+        CreateVideoSummary:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Sf6CoachApi
+            Method: POST
+            Path: /notes/video-summary
+        UpdateNote:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Sf6CoachApi
+            Method: PUT
+            Path: /notes/{noteId}
+        DeleteNote:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Sf6CoachApi
+            Method: DELETE
+            Path: /notes/{noteId}
+        AiConsultation:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Sf6CoachApi
+            Method: POST
+            Path: /ai-consultation
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+          - backend/src/index.ts
+        Format: cjs
+        Minify: false
+        OutExtension:
+          - .js=.js
+        Sourcemap: true
+        Target: es2022
+
+Outputs:
+  ApiUrl:
+    Description: HTTP API base URL
+    Value: !Sub "https://${Sf6CoachApi}.execute-api.${AWS::Region}.amazonaws.com"
+  NotesTableName:
+    Description: DynamoDB notes table name
+    Value: !Ref NotesTable
+  LambdaFunctionName:
+    Description: Notes API Lambda function name
+    Value: !Ref Sf6CoachApiFunction
+  FrontendBucketName:
+    Description: Private S3 bucket for frontend assets
+    Value: !Ref FrontendBucket
+  FrontendDistributionId:
+    Description: CloudFront distribution id
+    Value: !Ref FrontendDistribution
+  FrontendDomainName:
+    Description: CloudFront domain name for the frontend
+    Value: !GetAtt FrontendDistribution.DomainName
