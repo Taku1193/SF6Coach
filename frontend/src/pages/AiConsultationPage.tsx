@@ -3,18 +3,11 @@ import type { AiConsultationResponse, NoteType } from "@shared/types";
 import { api } from "../api";
 import { TagInput } from "../components/TagInput";
 
-function parseTags(value: string): string[] {
-  return value
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean);
-}
-
 export function AiConsultationPage() {
   const selectedCharacter = window.localStorage.getItem("sf6.selectedCharacter") ?? "Luke";
   const [opponentCharacter, setOpponentCharacter] = useState("");
   const [consultationText, setConsultationText] = useState("");
-  const [tagsInput, setTagsInput] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [noteTypeScope, setNoteTypeScope] = useState<"both" | NoteType>("both");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -39,7 +32,7 @@ export function AiConsultationPage() {
         character: selectedCharacter,
         opponentCharacter: opponentCharacter.trim() || undefined,
         consultationText: consultationText.trim(),
-        tags: parseTags(tagsInput),
+        tags,
         noteTypes
       });
       setResponse(result);
@@ -77,7 +70,7 @@ export function AiConsultationPage() {
               placeholder="JP戦でヴィーハト設置後に毎回崩される。何を意識すべき？"
             />
           </label>
-          <TagInput value={tagsInput} onChange={setTagsInput} placeholder="設置対応, JP" />
+          <TagInput value={tags} onChange={setTags} placeholder="例: 設置対応" />
           <label className="field">
             <span>参照ノート種別</span>
             <select value={noteTypeScope} onChange={(event) => setNoteTypeScope(event.target.value as "both" | NoteType)}>

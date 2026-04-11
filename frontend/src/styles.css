@@ -300,6 +300,28 @@ textarea {
   font-size: 0.85rem;
 }
 
+.tag-add-button {
+  width: fit-content;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid rgba(89, 64, 35, 0.12);
+  border-radius: 999px;
+  background: rgba(111, 90, 72, 0.1);
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.tag-chip-remove {
+  color: var(--danger);
+  font-size: 0.8rem;
+}
+
 .muted {
   color: var(--muted);
 }

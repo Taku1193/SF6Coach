@@ -8,13 +8,6 @@ type VideoSummaryFormPageProps = {
   mode: "create" | "edit";
 };
 
-function parseTags(value: string): string[] {
-  return value
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean);
-}
-
 export function VideoSummaryFormPage(_: VideoSummaryFormPageProps) {
   const navigate = useNavigate();
   const { noteId } = useParams();
@@ -22,7 +15,7 @@ export function VideoSummaryFormPage(_: VideoSummaryFormPageProps) {
   const [videoTitle, setVideoTitle] = useState("");
   const [url, setUrl] = useState("");
   const [summary, setSummary] = useState("");
-  const [tagsInput, setTagsInput] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -46,7 +39,7 @@ export function VideoSummaryFormPage(_: VideoSummaryFormPageProps) {
         setVideoTitle(note.videoTitle);
         setUrl(note.url);
         setSummary(note.summary);
-        setTagsInput(note.tags.join(", "));
+        setTags(note.tags);
       } catch (loadError) {
         if (!cancelled) {
           setError(loadError instanceof Error ? loadError.message : "ノート取得に失敗しました。");
@@ -82,7 +75,7 @@ export function VideoSummaryFormPage(_: VideoSummaryFormPageProps) {
         videoTitle: videoTitle.trim(),
         url: url.trim(),
         summary: summary.trim(),
-        tags: parseTags(tagsInput)
+        tags
       };
 
       const response = noteId ? await api.updateNote(noteId, payload) : await api.createVideoSummary(payload);
@@ -119,7 +112,7 @@ export function VideoSummaryFormPage(_: VideoSummaryFormPageProps) {
           <span>要約</span>
           <textarea value={summary} onChange={(event) => setSummary(event.target.value)} rows={8} />
         </label>
-        <TagInput value={tagsInput} onChange={setTagsInput} />
+        <TagInput value={tags} onChange={setTags} />
         {error ? <div className="status error">{error}</div> : null}
         <div className="button-group">
           <button className="primary-button" disabled={loading} type="submit">

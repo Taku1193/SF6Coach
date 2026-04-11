@@ -12,13 +12,6 @@ type BattleRecordFormPageProps = {
 const RESULT_SCORES = ["0", "1", "2"] as const;
 const RESULT_OUTCOMES = ["win", "lose", "draw"] as const;
 
-function parseTags(value: string): string[] {
-  return value
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean);
-}
-
 function parseResult(value: string): { myScore: string; opponentScore: string; outcome: string } {
   // 保存形式は "2-1 win" の1文字列なので、編集画面では3つの入力値へ分解し直す。
   const match = value.trim().match(/^([0-2])-([0-2])\s+(win|lose|draw)$/i);
@@ -51,7 +44,7 @@ export function BattleRecordFormPage(_: BattleRecordFormPageProps) {
   const [resultOutcome, setResultOutcome] = useState("lose");
   const [goodPoints, setGoodPoints] = useState("");
   const [improvements, setImprovements] = useState("");
-  const [tagsInput, setTagsInput] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -78,7 +71,7 @@ export function BattleRecordFormPage(_: BattleRecordFormPageProps) {
         setResultOutcome(parsedResult.outcome);
         setGoodPoints(response.note.goodPoints);
         setImprovements(response.note.improvements);
-        setTagsInput(response.note.tags.join(", "));
+        setTags(response.note.tags);
       } catch (loadError) {
         if (!cancelled) {
           setError(loadError instanceof Error ? loadError.message : "ノート取得に失敗しました。");
@@ -115,7 +108,7 @@ export function BattleRecordFormPage(_: BattleRecordFormPageProps) {
         result: buildResult(myResultScore, opponentResultScore, resultOutcome),
         goodPoints: goodPoints.trim(),
         improvements: improvements.trim(),
-        tags: parseTags(tagsInput)
+        tags
       };
 
       const response = noteId ? await api.updateNote(noteId, payload) : await api.createBattleRecord(payload);
@@ -194,7 +187,7 @@ export function BattleRecordFormPage(_: BattleRecordFormPageProps) {
           <span>改善点</span>
           <textarea value={improvements} onChange={(event) => setImprovements(event.target.value)} rows={5} />
         </label>
-        <TagInput value={tagsInput} onChange={setTagsInput} />
+        <TagInput value={tags} onChange={setTags} />
         {error ? <div className="status error">{error}</div> : null}
         <div className="button-group">
           <button className="primary-button" disabled={loading} type="submit">
