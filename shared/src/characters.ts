@@ -23,11 +23,14 @@ export const SF6_CHARACTERS: CharacterOption[] = [
   { id: "rashid", name: "Rashid", released: true },
   { id: "aki", name: "A.K.I.", released: true },
   { id: "ed", name: "Ed", released: true },
-  { id: "akuma", name: "Akuma", released: true },
-  { id: "mbison", name: "M. Bison", released: true },
+  { id: "gouki", name: "Gouki", released: true },
+  { id: "vega", name: "Vega", released: true },
   { id: "terry", name: "Terry", released: true },
   { id: "mai", name: "Mai", released: true },
-  { id: "elena", name: "Elena", released: true }
+  { id: "elena", name: "Elena", released: true },
+  { id: "sagat", name: "Sagat", released: true },
+  { id: "cviper", name: "C.Viper", released: true },
+  { id: "alex", name: "Alex", released: true }
 ];
 
 // キャラ候補一覧から表示名だけを取り出し、select や datalist に渡しやすい形へする。
