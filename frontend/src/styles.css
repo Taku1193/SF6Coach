@@ -264,6 +264,7 @@ textarea {
 .note-card-top {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 12px;
   color: var(--muted);
   font-size: 0.9rem;
@@ -289,6 +290,7 @@ textarea {
 .tag-list {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 8px;
 }
 
