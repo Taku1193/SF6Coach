@@ -5,6 +5,7 @@ import type {
   CreateVideoSummaryPayload,
   Note,
   NotesResponse,
+  UpdateFavoritePayload,
   UpdateNotePayload
 } from "@shared/types";
 
@@ -42,9 +43,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  listNotes(character: string) {
+  listNotes(character: string, favoriteOnly = false) {
     // 一覧 API は query string で使用キャラを渡す。
     const params = new URLSearchParams({ character });
+    if (favoriteOnly) {
+      params.set("favoriteOnly", "true");
+    }
     return request<NotesResponse>(`/notes?${params.toString()}`);
   },
   getNote(noteId: string) {
@@ -65,6 +69,12 @@ export const api = {
   updateNote(noteId: string, payload: UpdateNotePayload) {
     return request<{ note: Note }>(`/notes/${noteId}`, {
       method: "PUT",
+      body: JSON.stringify(payload)
+    });
+  },
+  updateFavorite(noteId: string, payload: UpdateFavoritePayload) {
+    return request<{ note: Note }>(`/notes/${noteId}/favorite`, {
+      method: "PATCH",
       body: JSON.stringify(payload)
     });
   },

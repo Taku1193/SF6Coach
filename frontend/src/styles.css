@@ -148,6 +148,21 @@ textarea {
   font-weight: 700;
 }
 
+.checkbox-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 0 4px;
+  font-weight: 700;
+}
+
+.checkbox-field input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
 .field input,
 .field select,
 .field textarea {
@@ -249,6 +264,8 @@ textarea {
 .note-card {
   display: grid;
   gap: 12px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
   padding: 20px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.56);
@@ -259,6 +276,12 @@ textarea {
 .note-card:hover {
   transform: translateY(-2px);
   border-color: rgba(182, 72, 45, 0.4);
+}
+
+.note-card-link {
+  display: grid;
+  gap: 12px;
+  align-content: start;
 }
 
 .note-card-top {
@@ -300,6 +323,59 @@ textarea {
   background: rgba(111, 90, 72, 0.1);
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.note-card-actions {
+  display: flex;
+  margin-top: auto;
+  justify-content: flex-end;
+}
+
+.favorite-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(89, 64, 35, 0.16);
+  background: rgba(255, 250, 241, 0.72);
+  color: rgba(120, 98, 66, 0.86);
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.favorite-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(214, 168, 48, 0.45);
+}
+
+.favorite-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.favorite-button.active {
+  color: #e0ad1f;
+  background: rgba(255, 239, 179, 0.36);
+  border-color: rgba(214, 168, 48, 0.34);
+}
+
+.favorite-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.favorite-button.active .favorite-icon {
+  fill: currentColor;
+}
+
+.detail-favorite-button {
+  flex-shrink: 0;
 }
 
 .tag-add-button {

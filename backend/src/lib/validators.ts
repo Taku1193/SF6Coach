@@ -1,4 +1,10 @@
-import type { AiConsultationRequest, CreateBattleRecordPayload, CreateVideoSummaryPayload, UpdateNotePayload } from "@shared/types";
+import type {
+  AiConsultationRequest,
+  CreateBattleRecordPayload,
+  CreateVideoSummaryPayload,
+  UpdateFavoritePayload,
+  UpdateNotePayload
+} from "@shared/types";
 
 // 指定値が文字列であることを確認し、前後空白を除いた文字列を返す。
 function assertString(value: unknown, fieldName: string): string {
@@ -100,6 +106,22 @@ export function validateUpdatePayload(input: unknown): UpdateNotePayload {
     url: typeof payload.url === "string" ? payload.url.trim() : undefined,
     summary: typeof payload.summary === "string" ? payload.summary.trim() : undefined,
     tags: payload.tags === undefined ? undefined : normalizeTags(payload.tags)
+  };
+}
+
+// お気に入り切替 API の入力を検証し、boolean をそのまま返す。
+export function validateFavoritePayload(input: unknown): UpdateFavoritePayload {
+  if (!input || typeof input !== "object") {
+    throw new Error("お気に入り更新データが不正です。");
+  }
+
+  const payload = input as Record<string, unknown>;
+  if (typeof payload.isFavorite !== "boolean") {
+    throw new Error("isFavorite は boolean で指定してください。");
+  }
+
+  return {
+    isFavorite: payload.isFavorite
   };
 }
 

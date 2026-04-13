@@ -1,12 +1,21 @@
 import { v4 as uuidv4 } from "uuid";
-import type { BattleRecordNote, CreateBattleRecordPayload, CreateVideoSummaryPayload, Note, UpdateNotePayload, VideoSummaryNote } from "@shared/types";
+import type {
+  BattleRecordNote,
+  CreateBattleRecordPayload,
+  CreateVideoSummaryPayload,
+  Note,
+  UpdateFavoritePayload,
+  UpdateNotePayload,
+  VideoSummaryNote
+} from "@shared/types";
 import { getAppUserId } from "./env";
 import { getNote, listNotesByCharacter, putNote, removeNote, updatePersistedNote } from "./repository";
-import { validateCreateBattleRecordPayload, validateCreateVideoSummaryPayload, validateUpdatePayload } from "./validators";
+import { validateCreateBattleRecordPayload, validateCreateVideoSummaryPayload, validateFavoritePayload, validateUpdatePayload } from "./validators";
 
 // 指定キャラに紐づくノート一覧を repository から取得して返す。
-export async function listNotes(character: string): Promise<Note[]> {
-  return listNotesByCharacter(character);
+export async function listNotes(character: string, favoriteOnly = false): Promise<Note[]> {
+  const notes = await listNotesByCharacter(character);
+  return favoriteOnly ? notes.filter((note) => note.isFavorite) : notes;
 }
 
 // noteId に対応するノートを 1 件取得し、存在しなければ null を返す。
@@ -23,6 +32,7 @@ export async function createBattleRecordNote(input: unknown): Promise<BattleReco
     noteId: uuidv4(),
     userId: getAppUserId(),
     noteType: "battleRecord",
+    isFavorite: false,
     createdAt: now,
     updatedAt: now,
     ...payload
@@ -40,6 +50,7 @@ export async function createVideoSummaryNote(input: unknown): Promise<VideoSumma
     noteId: uuidv4(),
     userId: getAppUserId(),
     noteType: "videoSummary",
+    isFavorite: false,
     createdAt: now,
     updatedAt: now,
     ...payload
@@ -81,6 +92,21 @@ export async function updateNoteById(noteId: string, input: unknown): Promise<No
         };
 
   return updatePersistedNote(updated);
+}
+
+// ノートのお気に入り状態だけを更新し、一覧と詳細の即時切替に使う。
+export async function updateNoteFavoriteById(noteId: string, input: unknown): Promise<Note | null> {
+  const existing = await getNote(noteId);
+  if (!existing) {
+    return null;
+  }
+
+  const payload: UpdateFavoritePayload = validateFavoritePayload(input);
+  return updatePersistedNote({
+    ...existing,
+    isFavorite: payload.isFavorite,
+    updatedAt: new Date().toISOString()
+  });
 }
 
 // noteId に対応するノートを削除し、成否を boolean で返す。

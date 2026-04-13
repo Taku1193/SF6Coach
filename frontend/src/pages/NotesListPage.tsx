@@ -9,8 +9,10 @@ export function NotesListPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [favoritePendingId, setFavoritePendingId] = useState("");
   const [noteTypeFilter, setNoteTypeFilter] = useState<NoteType | "all">("all");
   const [tagFilter, setTagFilter] = useState("");
+  const [favoriteOnly, setFavoriteOnly] = useState(false);
   const character = window.localStorage.getItem("sf6.selectedCharacter") ?? "";
 
   useEffect(() => {
@@ -21,7 +23,7 @@ export function NotesListPage() {
       try {
         setLoading(true);
         setError("");
-        const response = await api.listNotes(character);
+        const response = await api.listNotes(character, favoriteOnly);
         if (!cancelled) {
           setNotes(response.notes);
         }
@@ -44,7 +46,7 @@ export function NotesListPage() {
     return () => {
       cancelled = true;
     };
-  }, [character]);
+  }, [character, favoriteOnly]);
 
   const filteredNotes = useMemo(() => {
     // API 側の取得条件は「キャラ」までにとどめ、種別やタグの絞り込みは画面側で即時反映する。
@@ -53,10 +55,27 @@ export function NotesListPage() {
       const matchesTag =
         tagFilter.trim() === "" ||
         note.tags.some((tag) => tag.toLowerCase().includes(tagFilter.trim().toLowerCase()));
+      const matchesFavorite = !favoriteOnly || note.isFavorite;
 
-      return matchesType && matchesTag;
+      return matchesType && matchesTag && matchesFavorite;
     });
-  }, [noteTypeFilter, notes, tagFilter]);
+  }, [favoriteOnly, noteTypeFilter, notes, tagFilter]);
+
+  // 一覧から星を押した時に対象ノートだけを更新し、全件再取得なしで表示を同期する。
+  async function handleToggleFavorite(targetNote: Note) {
+    try {
+      setFavoritePendingId(targetNote.noteId);
+      setError("");
+      const response = await api.updateFavorite(targetNote.noteId, {
+        isFavorite: !targetNote.isFavorite
+      });
+      setNotes((currentNotes) => currentNotes.map((note) => (note.noteId === response.note.noteId ? response.note : note)));
+    } catch (toggleError) {
+      setError(toggleError instanceof Error ? toggleError.message : "お気に入り更新に失敗しました。");
+    } finally {
+      setFavoritePendingId("");
+    }
+  }
 
   return (
     <section className="stack">
@@ -93,6 +112,10 @@ export function NotesListPage() {
             placeholder="設置対応"
           />
         </label>
+        <label className="checkbox-field">
+          <input checked={favoriteOnly} onChange={(event) => setFavoriteOnly(event.target.checked)} type="checkbox" />
+          <span>お気に入りのみ表示する</span>
+        </label>
         <Link className="link-button" to="/consultation">
           AI相談へ
         </Link>
@@ -107,7 +130,12 @@ export function NotesListPage() {
         ) : (
           <div className="notes-grid">
             {filteredNotes.map((note) => (
-              <NoteCard key={note.noteId} note={note} />
+              <NoteCard
+                favoriteDisabled={favoritePendingId === note.noteId}
+                key={note.noteId}
+                note={note}
+                onToggleFavorite={handleToggleFavorite}
+              />
             ))}
           </div>
         )

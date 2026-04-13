@@ -49,6 +49,7 @@ Resources:
         AllowMethods:
           - GET
           - POST
+          - PATCH
           - PUT
           - DELETE
           - OPTIONS
@@ -199,6 +200,12 @@ Resources:
             ApiId: !Ref Sf6CoachApi
             Method: PUT
             Path: /notes/{noteId}
+        UpdateFavorite:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Sf6CoachApi
+            Method: PATCH
+            Path: /notes/{noteId}/favorite
         DeleteNote:
           Type: HttpApi
           Properties:

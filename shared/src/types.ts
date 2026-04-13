@@ -8,6 +8,7 @@ export type BaseNote = {
   userId: string;
   character: string;
   noteType: NoteType;
+  isFavorite: boolean;
   tags: string[];
   createdAt: string;
   updatedAt: string;
@@ -55,6 +56,10 @@ export type UpdateNotePayload = Partial<
   > &
     Pick<VideoSummaryNote, "videoTitle" | "url" | "summary">
 >;
+
+export type UpdateFavoritePayload = {
+  isFavorite: boolean;
+};
 
 export type NotesResponse = {
   notes: Note[];

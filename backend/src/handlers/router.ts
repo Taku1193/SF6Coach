@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import { createBattleRecordNote, createVideoSummaryNote, deleteNoteById, getNoteById, listNotes, updateNoteById } from "../lib/notes-service";
+import { createBattleRecordNote, createVideoSummaryNote, deleteNoteById, getNoteById, listNotes, updateNoteById, updateNoteFavoriteById } from "../lib/notes-service";
 import { consultWithNotes } from "../lib/consultation-service";
 import { badRequest, created, noContent, notFound, ok, serverError } from "../lib/responses";
 
@@ -17,11 +17,12 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
 
     if (routeKey === "GET /notes") {
       const character = event.queryStringParameters?.character;
+      const favoriteOnly = event.queryStringParameters?.favoriteOnly === "true";
       if (!character) {
         return badRequest("character は必須です。");
       }
 
-      const notes = await listNotes(character);
+      const notes = await listNotes(character, favoriteOnly);
       return ok({ notes });
     }
 
@@ -49,6 +50,16 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     if (event.requestContext.http.method === "PUT" && noteId && event.rawPath.startsWith("/notes/")) {
       const payload = parseBody(event.body);
       const note = await updateNoteById(noteId, payload);
+      if (!note) {
+        return notFound("ノートが見つかりません。");
+      }
+
+      return ok({ note });
+    }
+
+    if (event.requestContext.http.method === "PATCH" && noteId && event.rawPath === `/notes/${noteId}/favorite`) {
+      const payload = parseBody(event.body);
+      const note = await updateNoteFavoriteById(noteId, payload);
       if (!note) {
         return notFound("ノートが見つかりません。");
       }

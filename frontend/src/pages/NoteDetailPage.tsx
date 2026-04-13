@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { buildNoteTitle, isBattleRecordNote, type Note } from "@shared/types";
 import { api } from "../api";
+import { FavoriteButton } from "../components/FavoriteButton";
 import { BattleRecordFormPage } from "./BattleRecordFormPage";
 import { VideoSummaryFormPage } from "./VideoSummaryFormPage";
 
@@ -16,6 +17,7 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [favoriteUpdating, setFavoriteUpdating] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +72,26 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
     }
   }
 
+  // 詳細画面でも同じ API を使い、星の見た目だけ先に変えず保存結果で確定させる。
+  async function handleToggleFavorite() {
+    if (!note) {
+      return;
+    }
+
+    try {
+      setFavoriteUpdating(true);
+      setError("");
+      const response = await api.updateFavorite(note.noteId, {
+        isFavorite: !note.isFavorite
+      });
+      setNote(response.note);
+    } catch (toggleError) {
+      setError(toggleError instanceof Error ? toggleError.message : "お気に入り更新に失敗しました。");
+    } finally {
+      setFavoriteUpdating(false);
+    }
+  }
+
   if (loading) {
     return <div className="panel status">ノートを読み込み中です。</div>;
   }
@@ -102,6 +124,12 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
             <button className="danger-button" onClick={handleDelete} type="button">
               削除
             </button>
+            <FavoriteButton
+              className="detail-favorite-button"
+              disabled={favoriteUpdating}
+              isFavorite={note.isFavorite}
+              onClick={handleToggleFavorite}
+            />
           </div>
         </div>
 

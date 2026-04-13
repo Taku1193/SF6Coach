@@ -8,6 +8,14 @@ type StoredNote = Note & {
   gsi1sk: string;
 };
 
+// 旧データには isFavorite が存在しないため、読込時に false を補完して互換性を保つ。
+function normalizeNote(raw: Note | (Partial<Note> & { [key: string]: unknown })): Note {
+  return {
+    ...(raw as Note),
+    isFavorite: raw.isFavorite === true
+  };
+}
+
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const tableName = () => getRequiredEnv("NOTES_TABLE_NAME");
 
@@ -36,7 +44,9 @@ export async function listNotesByCharacter(character: string): Promise<Note[]> {
 
   const result = await client.send(command);
   // Query の結果順は GSI の sort key 依存だが、念のため updatedAt 降順で整えて返す。
-  return ((result.Items ?? []) as Note[]).sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  return (result.Items ?? [])
+    .map((item) => normalizeNote(item as Note))
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
 // 主キー userId + noteId でノートを 1 件取得し、存在しない場合は null を返す。
@@ -50,7 +60,7 @@ export async function getNote(noteId: string): Promise<Note | null> {
   });
 
   const result = await client.send(command);
-  return (result.Item as Note | undefined) ?? null;
+  return result.Item ? normalizeNote(result.Item as Note) : null;
 }
 
 // ノート 1 件をそのまま Put し、新規作成用の永続化処理として使う。
@@ -77,10 +87,11 @@ export async function updatePersistedNote(note: Note): Promise<Note> {
       },
       // UpdateExpression の左辺に予約語が含まれても壊れないよう、属性名はすべてエイリアス化する。
       UpdateExpression:
-        "SET #character = :character, #noteType = :noteType, #tags = :tags, #createdAt = :createdAt, #updatedAt = :updatedAt, #gsi1pk = :gsi1pk, #gsi1sk = :gsi1sk, #opponentCharacter = :opponentCharacter, #result = :result, #goodPoints = :goodPoints, #improvements = :improvements, #videoTitle = :videoTitle, #url = :url, #summary = :summary",
+        "SET #character = :character, #noteType = :noteType, #isFavorite = :isFavorite, #tags = :tags, #createdAt = :createdAt, #updatedAt = :updatedAt, #gsi1pk = :gsi1pk, #gsi1sk = :gsi1sk, #opponentCharacter = :opponentCharacter, #result = :result, #goodPoints = :goodPoints, #improvements = :improvements, #videoTitle = :videoTitle, #url = :url, #summary = :summary",
       ExpressionAttributeNames: {
         "#character": "character",
         "#noteType": "noteType",
+        "#isFavorite": "isFavorite",
         "#tags": "tags",
         "#createdAt": "createdAt",
         "#updatedAt": "updatedAt",
@@ -97,6 +108,7 @@ export async function updatePersistedNote(note: Note): Promise<Note> {
       ExpressionAttributeValues: {
         ":character": stored.character,
         ":noteType": stored.noteType,
+        ":isFavorite": stored.isFavorite,
         ":tags": stored.tags,
         ":createdAt": stored.createdAt,
         ":updatedAt": stored.updatedAt,
