@@ -66,6 +66,16 @@ textarea {
   margin: 0;
 }
 
+.app-title-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .eyebrow {
   margin: 0 0 6px;
   color: var(--accent);

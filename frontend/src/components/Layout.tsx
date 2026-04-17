@@ -11,12 +11,19 @@ export function Layout({ children, hideNavigation = false }: LayoutProps) {
   const location = useLocation();
   const selectedCharacter = window.localStorage.getItem("sf6.selectedCharacter");
 
+  // 左上のアプリ名は現在地に関わらず、画面状態を初期化するために再読み込みの起点にする。
+  function handleReload() {
+    window.location.reload();
+  }
+
   return (
     <div className="shell">
       <header className="app-header">
         <div>
           <p className="eyebrow">SF6 Growth Notes</p>
-          <h1>SF6 Coach</h1>
+          <button className="app-title-button" onClick={handleReload} type="button">
+            <h1>SF6 Coach</h1>
+          </button>
         </div>
         {!hideNavigation ? (
           // 現在地が分かるように、簡易的に pathname ベースで active を切り替える。
