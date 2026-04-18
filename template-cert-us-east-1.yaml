@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: SF6 Coach frontend certificate stack for CloudFront in us-east-1
+
+Parameters:
+  FrontendCustomDomain:
+    Type: String
+    Description: Custom domain served by CloudFront, for example sf6coach.graycier.com.
+  Route53HostedZoneId:
+    Type: String
+    Description: Public Route53 hosted zone id that owns the custom domain.
+
+Resources:
+  FrontendCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      # CloudFront は us-east-1 の ACM 証明書しか参照できないため、証明書だけ別スタックで管理する。
+      DomainName: !Ref FrontendCustomDomain
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref FrontendCustomDomain
+          HostedZoneId: !Ref Route53HostedZoneId
+
+Outputs:
+  FrontendCertificateArn:
+    Description: ACM certificate ARN for the frontend custom domain.
+    Value: !Ref FrontendCertificate
+  FrontendCustomDomain:
+    Description: Custom domain covered by the certificate.
+    Value: !Ref FrontendCustomDomain

@@ -166,6 +166,62 @@ aws cloudfront create-invalidation \
 
 公開URLは `https://YOUR_FRONTEND_DOMAIN` となる。
 
+## 11.1 独自ドメインを IaC で運用する場合
+
+CloudFront が参照する ACM 証明書は `us-east-1` 必須のため、証明書だけ別テンプレートで管理する。
+
+### 1. 証明書スタックを `us-east-1` にデプロイ
+
+```bash
+aws cloudformation deploy \
+  --template-file template-cert-us-east-1.yaml \
+  --stack-name sf6-coach-cert \
+  --region us-east-1 \
+  --capabilities CAPABILITY_IAM \
+  --parameter-overrides \
+    FrontendCustomDomain=sf6coach.graycier.com \
+    Route53HostedZoneId=Z08996233829SKO4SQNPG
+```
+
+証明書 ARN を取得する。
+
+```bash
+aws cloudformation describe-stacks \
+  --stack-name sf6-coach-cert \
+  --region us-east-1 \
+  --query "Stacks[0].Outputs[?OutputKey=='FrontendCertificateArn'].OutputValue" \
+  --output text
+```
+
+### 2. 本体スタックへ独自ドメイン情報を渡してデプロイ
+
+`template.yaml` は、以下3つがすべて指定された時だけ CloudFront の独自ドメイン設定と Route53 Alias レコードを作成する。
+
+- `FrontendCustomDomain`
+- `FrontendCertificateArn`
+- `Route53HostedZoneId`
+
+```bash
+sam deploy \
+  --stack-name sf6-coach-mvp \
+  --region ap-northeast-1 \
+  --capabilities CAPABILITY_IAM \
+  --parameter-overrides \
+    AppUserId=local-user \
+    OpenAiApiKey=your_openai_api_key \
+    OpenAiModel=gpt-4.1-mini \
+    FrontendOrigin=https://sf6coach.graycier.com \
+    FrontendCustomDomain=sf6coach.graycier.com \
+    FrontendCertificateArn=arn:aws:acm:us-east-1:123456789012:certificate/xxxx \
+    Route53HostedZoneId=Z08996233829SKO4SQNPG
+```
+
+### 3. デプロイ後確認
+
+- CloudFront に `sf6coach.graycier.com` が aliases として入っていること
+- Route53 に `A` / `AAAA` Alias が作成されていること
+- Output `FrontendCustomUrl` が出力されていること
+
 ## 12. 注意点
 
 - OpenAI APIキーは SAM parameter として Lambda 環境変数に設定される
