@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { AiConsultationResponse, NoteType } from "@shared/types";
+import { getCharacterNames } from "@shared/characters";
 import { api } from "../api";
 import { TagInput } from "../components/TagInput";
 
 // 条件付きで AI 相談を実行し、返ってきた要約・改善点・次アクションを表示する。
 export function AiConsultationPage() {
   const selectedCharacter = window.localStorage.getItem("sf6.selectedCharacter") ?? "Luke";
+  const characterNames = useMemo(() => getCharacterNames(), []);
   const [opponentCharacter, setOpponentCharacter] = useState("");
   const [consultationText, setConsultationText] = useState("");
   const [tags, setTags] = useState<string[]>([]);
@@ -61,7 +63,14 @@ export function AiConsultationPage() {
           </label>
           <label className="field">
             <span>相手キャラ</span>
-            <input value={opponentCharacter} onChange={(event) => setOpponentCharacter(event.target.value)} placeholder="JP" />
+            <select value={opponentCharacter} onChange={(event) => setOpponentCharacter(event.target.value)}>
+              <option value="">指定なし</option>
+              {characterNames.map((characterName) => (
+                <option key={characterName} value={characterName}>
+                  {characterName}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="field">
             <span>相談内容</span>
