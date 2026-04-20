@@ -16,7 +16,7 @@ export function CharacterSelectionPage() {
       return;
     }
 
-    // このアプリでは認証の代わりに「現在見ているキャラ」を localStorage で管理している。
+    // 認証とは独立に、現在操作対象のキャラだけを localStorage へ保持して再訪時の手間を減らす。
     window.localStorage.setItem("sf6.selectedCharacter", character.trim());
     navigate("/notes");
   }

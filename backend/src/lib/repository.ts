@@ -1,6 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, DeleteCommand, GetCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { getAppUserId, getRequiredEnv } from "./env";
+import { getRequiredEnv } from "./env";
 import type { Note } from "@shared/types";
 
 type StoredNote = Note & {
@@ -30,8 +30,7 @@ function toStoredNote(note: Note): StoredNote {
 }
 
 // キャラ単位の GSI を使ってノート一覧を取得し、更新日時の降順で返す。
-export async function listNotesByCharacter(character: string): Promise<Note[]> {
-  const userId = getAppUserId();
+export async function listNotesByCharacter(userId: string, character: string): Promise<Note[]> {
   const command = new QueryCommand({
     TableName: tableName(),
     IndexName: "GSI1",
@@ -50,11 +49,11 @@ export async function listNotesByCharacter(character: string): Promise<Note[]> {
 }
 
 // 主キー userId + noteId でノートを 1 件取得し、存在しない場合は null を返す。
-export async function getNote(noteId: string): Promise<Note | null> {
+export async function getNote(userId: string, noteId: string): Promise<Note | null> {
   const command = new GetCommand({
     TableName: tableName(),
     Key: {
-      userId: getAppUserId(),
+      userId,
       noteId
     }
   });
@@ -129,8 +128,8 @@ export async function updatePersistedNote(note: Note): Promise<Note> {
 }
 
 // ノート削除前に存在確認を行い、API で 404 判定できるよう boolean を返す。
-export async function removeNote(noteId: string): Promise<boolean> {
-  const existing = await getNote(noteId);
+export async function removeNote(userId: string, noteId: string): Promise<boolean> {
+  const existing = await getNote(userId, noteId);
   if (!existing) {
     return false;
   }
@@ -140,7 +139,7 @@ export async function removeNote(noteId: string): Promise<boolean> {
     new DeleteCommand({
       TableName: tableName(),
       Key: {
-        userId: getAppUserId(),
+        userId,
         noteId
       }
     })

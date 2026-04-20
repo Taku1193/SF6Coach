@@ -37,6 +37,11 @@ export function badRequest(message: string) {
   return response(400, { message });
 }
 
+// 401 Unauthorized を返し、認証不足または期限切れをクライアントへ伝える。
+export function unauthorized(message: string) {
+  return response(401, { message });
+}
+
 // 404 Not Found を返し、対象リソースが存在しないことを伝える。
 export function notFound(message: string) {
   return response(404, { message });

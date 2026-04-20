@@ -8,30 +8,59 @@ import type {
   UpdateFavoritePayload,
   UpdateNotePayload
 } from "@shared/types";
+import { clearStoredSession, getValidIdToken } from "./lib/cognito-auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 // API の共通 fetch 処理をまとめ、成功時の JSON 解析と失敗時の message 抽出を揃える。
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const idToken = await getValidIdToken();
+  const headers = new Headers(init?.headers);
+  headers.set("Content-Type", "application/json");
+  if (idToken) {
+    headers.set("Authorization", `Bearer ${idToken}`);
+  }
+
   // フロント側の API 呼び出しはここに集約し、ヘッダーやエラー解釈を統一する。
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers
-    },
-    ...init
+    ...init,
+    headers
   });
+
+  if (response.status === 401) {
+    // 認証切れ時は保存済み token を破棄し、ユーザーをログイン画面へ戻す。
+    clearStoredSession();
+    window.localStorage.removeItem("sf6.selectedCharacter");
+    window.location.assign("/login");
+    throw new Error("セッションの有効期限が切れました。再度ログインしてください。");
+  }
 
   if (!response.ok) {
     const raw = await response.text();
-    try {
-      // バックエンドは { message } 形式でエラーを返すため、まず JSON として解釈する。
-      const parsed = JSON.parse(raw) as { message?: string };
-      throw new Error(parsed.message || "API request failed.");
-    } catch {
+    if (raw) {
+      let parsedMessage = "";
+
+      try {
+        // バックエンドは { message } 形式でエラーを返すため、まず JSON として解釈する。
+        const parsed = JSON.parse(raw) as { message?: string };
+        parsedMessage = parsed.message ?? "";
+      } catch {
+        parsedMessage = "";
+      }
+
+      if (parsedMessage) {
+        throw new Error(parsedMessage);
+      }
+
       // JSON でない場合も、そのまま本文を表に出した方が調査しやすい。
-      throw new Error(raw || "API request failed.");
+      if (!raw.trim().startsWith("{")) {
+        throw new Error(raw || "API request failed.");
+      }
+
+      throw new Error("API request failed.");
     }
+
+    throw new Error("API request failed.");
   }
 
   if (response.status === 204) {

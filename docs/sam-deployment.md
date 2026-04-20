@@ -23,6 +23,9 @@
   - `Sf6CoachApiFunction`
 - API Gateway HTTP API
   - `Sf6CoachApi`
+- Cognito
+  - `Sf6CoachUserPool`
+  - `Sf6CoachUserPoolClient`
 - DynamoDB
   - `NotesTable`
 - S3
@@ -33,8 +36,9 @@
 ## 5. SAMテンプレートの要点
 
 - Lambda runtime: `nodejs22.x`
-- ビルド方法: `esbuild`
+- Lambda 配布物: `npm run build:lambda` で生成する `artifacts/lambda/index.js`
 - API種別: `AWS::Serverless::HttpApi`
+- 認証: Cognito User Pool JWT authorizer
 - DynamoDB:
   - PK: `userId`
   - SK: `noteId`
@@ -51,7 +55,7 @@
 ### 6.1 ビルド
 
 ```bash
-sam build
+npm run build:lambda
 ```
 
 ### 6.2 APIローカル起動
@@ -59,10 +63,17 @@ sam build
 ```bash
 sam local start-api \
   --parameter-overrides \
-    AppUserId=local-user \
     OpenAiApiKey=your_openai_api_key \
     OpenAiModel=gpt-4.1-mini \
     FrontendOrigin=*
+```
+
+ローカル実行では Cognito authorizer の claims が自動付与されないため、検証時は `x-test-user-id` ヘッダーを付けて呼び出す。
+
+例:
+
+```bash
+curl -H "x-test-user-id: local-user" "http://127.0.0.1:3000/notes?character=Luke"
 ```
 
 ### 6.3 フロント接続
@@ -76,7 +87,6 @@ sam local start-api \
 ```bash
 sam local invoke Sf6CoachApiFunction -e events/consultation.json \
   --parameter-overrides \
-    AppUserId=local-user \
     OpenAiApiKey=your_openai_api_key \
     OpenAiModel=gpt-4.1-mini
 ```
@@ -84,6 +94,7 @@ sam local invoke Sf6CoachApiFunction -e events/consultation.json \
 ## 8. 初回デプロイ
 
 ```bash
+npm run build:lambda
 sam deploy --guided
 ```
 
@@ -94,20 +105,32 @@ sam deploy --guided
 - Confirm changes before deploy: `Y`
 - Allow SAM CLI IAM role creation: `Y`
 - Disable rollback: `N`
+- `samconfig.toml` には秘密情報や一時的な parameter override を固定しない
+- `OpenAiApiKey` は guided 実行時に入力するか、明示的に CLI 引数で渡す
 
 ## 9. guided 以外でのデプロイ例
 
 ```bash
+npm run build:lambda
 sam deploy \
   --stack-name sf6-coach-mvp \
   --resolve-s3 \
   --capabilities CAPABILITY_IAM \
   --region ap-northeast-1 \
   --parameter-overrides \
-    AppUserId=local-user \
     OpenAiApiKey=your_openai_api_key \
     OpenAiModel=gpt-4.1-mini \
     FrontendOrigin=*
+```
+
+既存スタックを更新するだけで、現在の `OpenAiApiKey` を維持したい場合は `OpenAiApiKey` を省略してよい。
+
+```bash
+npm run build:lambda
+sam deploy \
+  --stack-name sf6-coach-mvp \
+  --capabilities CAPABILITY_IAM \
+  --region ap-northeast-1
 ```
 
 ## 10. デプロイ後確認
@@ -120,7 +143,7 @@ aws cloudformation describe-stacks \
   --query "Stacks[0].Outputs"
 ```
 
-出力された `ApiUrl` をフロントエンドの `VITE_API_BASE_URL` に設定する。
+出力された `ApiUrl` をフロントエンドの `VITE_API_BASE_URL` に設定する。あわせて `CognitoRegion` と `CognitoUserPoolClientId` もフロントエンド設定へ利用する。
 
 ### 10.2 フロント配信先確認
 
@@ -142,6 +165,8 @@ APIデプロイ後、ルート `.env` を以下のように設定する。
 
 ```env
 VITE_API_BASE_URL=https://xxxxxxxxxx.execute-api.ap-northeast-1.amazonaws.com
+VITE_COGNITO_REGION=ap-northeast-1
+VITE_COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 その後フロントエンドをビルドする。
@@ -202,12 +227,12 @@ aws cloudformation describe-stacks \
 - `Route53HostedZoneId`
 
 ```bash
+npm run build:lambda
 sam deploy \
   --stack-name sf6-coach-mvp \
   --region ap-northeast-1 \
   --capabilities CAPABILITY_IAM \
   --parameter-overrides \
-    AppUserId=local-user \
     OpenAiApiKey=your_openai_api_key \
     OpenAiModel=gpt-4.1-mini \
     FrontendOrigin=https://sf6coach.graycier.com \
@@ -227,4 +252,6 @@ sam deploy \
 - OpenAI APIキーは SAM parameter として Lambda 環境変数に設定される
 - 本番運用では `OpenAiApiKey` を Secrets Manager または SSM Parameter Store に移す方が望ましい
 - CORS は `FrontendOrigin` パラメータで制御する。MVPでは `*` のままでもよい
-- MVPのため、`APP_USER_ID` は固定文字列で運用する
+- フロントエンドでは `ApiUrl` に加え、Output `CognitoRegion` と `CognitoUserPoolClientId` を `.env` へ設定する
+- `samconfig.toml` に `OpenAiApiKey` や廃止済みパラメータを固定すると、意図せず本番設定を壊すため避ける
+- `sam deploy` 前に `npm run build:lambda` を実行しないと、Lambda へ古い配布物が上がるため注意する

@@ -2,7 +2,10 @@ node_modules/
 .aws-sam/
 frontend/dist/
 backend/dist/
+artifacts/
 .codex
 .env
 frontend/.env
 review.txt
+deploy-built-template.yaml
+packaged-deploy-template.yaml

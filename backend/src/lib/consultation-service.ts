@@ -190,9 +190,9 @@ function fallbackConsultation(notes: Note[]): AiConsultationResponse {
 }
 
 // 入力検証、参照ノート抽出、OpenAI 呼び出し、フォールバックまでをまとめて実行する。
-export async function consultWithNotes(input: unknown): Promise<AiConsultationResponse> {
+export async function consultWithNotes(userId: string, input: unknown): Promise<AiConsultationResponse> {
   const request = validateConsultationPayload(input);
-  const notes = await listNotesByCharacter(request.character);
+  const notes = await listNotesByCharacter(userId, request.character);
   const selectedNotes = scoreNotes(request, notes);
 
   // 参照ノートがない場合はAIに聞かず、まずノート追加を促す。
