@@ -1,8 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AiConsultationResponse, NoteType } from "@shared/types";
 import { getCharacterNames } from "@shared/characters";
 import { api } from "../api";
-import { TagInput } from "../components/TagInput";
 
 // 条件付きで AI 相談を実行し、返ってきた要約・改善点・次アクションを表示する。
 export function AiConsultationPage() {
@@ -11,10 +10,65 @@ export function AiConsultationPage() {
   const [opponentCharacter, setOpponentCharacter] = useState("");
   const [consultationText, setConsultationText] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [tagSearch, setTagSearch] = useState("");
+  const [tagLoading, setTagLoading] = useState(true);
+  const [tagError, setTagError] = useState("");
   const [noteTypeScope, setNoteTypeScope] = useState<"both" | NoteType>("both");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [response, setResponse] = useState<AiConsultationResponse | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // AI相談のタグは既存ノート由来に限定し、存在しないタグを相談条件に入れないようにする。
+    async function loadTags() {
+      try {
+        setTagLoading(true);
+        setTagError("");
+        const result = await api.listNotes(selectedCharacter);
+        const uniqueTags = Array.from(new Set(result.notes.flatMap((note) => note.tags))).sort((left, right) =>
+          left.localeCompare(right, "ja")
+        );
+
+        if (!cancelled) {
+          setAvailableTags(uniqueTags);
+          setTags((currentTags) => currentTags.filter((tag) => uniqueTags.includes(tag)));
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setTagError(loadError instanceof Error ? loadError.message : "タグ候補の取得に失敗しました。");
+        }
+      } finally {
+        if (!cancelled) {
+          setTagLoading(false);
+        }
+      }
+    }
+
+    void loadTags();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCharacter]);
+
+  const filteredTags = useMemo(() => {
+    const normalizedSearch = tagSearch.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return availableTags;
+    }
+
+    return availableTags.filter((tag) => tag.toLowerCase().includes(normalizedSearch));
+  }, [availableTags, tagSearch]);
+
+  // 候補タグを押すたびに選択・解除を切り替え、AI相談へ渡すタグを候補内に限定する。
+  function handleToggleTag(tag: string) {
+    setTags((currentTags) =>
+      currentTags.includes(tag) ? currentTags.filter((currentTag) => currentTag !== tag) : [...currentTags, tag]
+    );
+  }
 
   // 相談条件を payload にまとめ、AI 相談 API を呼び出して結果を反映する。
   async function handleSubmit(event: React.FormEvent) {
@@ -81,7 +135,40 @@ export function AiConsultationPage() {
               placeholder="JP戦でヴィーハト設置後に毎回崩される。何を意識すべき？"
             />
           </label>
-          <TagInput value={tags} onChange={setTags} placeholder="例: 設置対応" />
+          <div className="field">
+            <span>タグ</span>
+            <input
+              value={tagSearch}
+              onChange={(event) => setTagSearch(event.target.value)}
+              placeholder="タグ候補を検索"
+            />
+            {tagLoading ? <div className="status">タグ候補を読み込み中です。</div> : null}
+            {tagError ? <div className="status error">{tagError}</div> : null}
+            {!tagLoading && !tagError ? (
+              availableTags.length === 0 ? (
+                <div className="status">選択できるタグはありません。</div>
+              ) : filteredTags.length === 0 ? (
+                <div className="status">条件に一致するタグはありません。</div>
+              ) : (
+                <div className="tag-selector">
+                  {filteredTags.map((tag) => {
+                    const selected = tags.includes(tag);
+                    return (
+                      <button
+                        className={`tag-choice${selected ? " selected" : ""}`}
+                        key={tag}
+                        onClick={() => handleToggleTag(tag)}
+                        type="button"
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              )
+            ) : null}
+            <small>既存ノートにあるタグから選択します。存在しないタグは指定できません。</small>
+          </div>
           <label className="field">
             <span>参照ノート種別</span>
             <select value={noteTypeScope} onChange={(event) => setNoteTypeScope(event.target.value as "both" | NoteType)}>

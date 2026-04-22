@@ -461,6 +461,28 @@ textarea {
   font-size: 0.8rem;
 }
 
+.tag-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-choice {
+  padding: 8px 12px;
+  border: 1px solid rgba(89, 64, 35, 0.14);
+  border-radius: 999px;
+  background: rgba(111, 90, 72, 0.1);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tag-choice.selected {
+  border-color: rgba(182, 72, 45, 0.35);
+  background: rgba(182, 72, 45, 0.14);
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
 .muted {
   color: var(--muted);
 }
