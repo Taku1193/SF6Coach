@@ -323,6 +323,18 @@ Resources:
             ApiId: !Ref Sf6CoachApi
             Method: POST
             Path: /ai-consultation
+        GetFocusIssue:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Sf6CoachApi
+            Method: GET
+            Path: /focus-issue
+        SaveFocusIssue:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Sf6CoachApi
+            Method: PUT
+            Path: /focus-issue
 Outputs:
   # デプロイ後にフロント・API・DynamoDB の参照先をすぐ確認できるよう、主要値を出力する。
   ApiUrl:

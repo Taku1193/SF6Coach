@@ -3,6 +3,7 @@ import type {
   CreateBattleRecordPayload,
   CreateVideoSummaryPayload,
   UpdateFavoritePayload,
+  UpsertFocusIssuePayload,
   UpdateNotePayload
 } from "@shared/types";
 
@@ -152,5 +153,42 @@ export function validateConsultationPayload(input: unknown): AiConsultationReque
     noteTypes: Array.isArray(payload.noteTypes)
       ? payload.noteTypes.filter((value): value is "battleRecord" | "videoSummary" => value === "battleRecord" || value === "videoSummary")
       : undefined
+  };
+}
+
+// 課題保存 API の入力を検証し、タイトル必須・参考ノート最大3件の業務制約をここで保証する。
+export function validateFocusIssuePayload(input: unknown): UpsertFocusIssuePayload {
+  if (!input || typeof input !== "object") {
+    throw new Error("課題の入力が不正です。");
+  }
+
+  const payload = input as Record<string, unknown>;
+  const character = assertString(payload.character, "character");
+  const title = assertString(payload.title, "title");
+  const memo = typeof payload.memo === "string" ? payload.memo.trim() : "";
+  const referenceNoteIds = Array.isArray(payload.referenceNoteIds)
+    ? payload.referenceNoteIds
+        .filter((noteId): noteId is string => typeof noteId === "string")
+        .map((noteId) => noteId.trim())
+        .filter(Boolean)
+    : [];
+
+  if (!character) {
+    throw new Error("character は必須です。");
+  }
+
+  if (!title) {
+    throw new Error("課題タイトルは必須です。");
+  }
+
+  if (referenceNoteIds.length > 3) {
+    throw new Error("参考ノートは3件まで選択できます。");
+  }
+
+  return {
+    character,
+    title,
+    memo,
+    referenceNoteIds: Array.from(new Set(referenceNoteIds))
   };
 }

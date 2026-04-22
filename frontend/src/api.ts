@@ -3,10 +3,12 @@ import type {
   AiConsultationResponse,
   CreateBattleRecordPayload,
   CreateVideoSummaryPayload,
+  FocusIssueResponse,
   Note,
   NotesResponse,
   UpdateFavoritePayload,
-  UpdateNotePayload
+  UpdateNotePayload,
+  UpsertFocusIssuePayload
 } from "@shared/types";
 import { clearStoredSession, getValidIdToken } from "./lib/cognito-auth";
 
@@ -115,6 +117,16 @@ export const api = {
   consult(payload: AiConsultationRequest) {
     return request<AiConsultationResponse>("/ai-consultation", {
       method: "POST",
+      body: JSON.stringify(payload)
+    });
+  },
+  getFocusIssue(character: string) {
+    const params = new URLSearchParams({ character });
+    return request<FocusIssueResponse>(`/focus-issue?${params.toString()}`);
+  },
+  saveFocusIssue(payload: UpsertFocusIssuePayload) {
+    return request<FocusIssueResponse>("/focus-issue", {
+      method: "PUT",
       body: JSON.stringify(payload)
     });
   }

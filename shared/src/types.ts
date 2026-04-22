@@ -80,6 +80,39 @@ export type AiConsultationResponse = {
   referenceNotes: string[];
 };
 
+export type FocusIssue = {
+  issueId: string;
+  userId: string;
+  character: string;
+  title: string;
+  memo: string;
+  referenceNoteIds: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type FocusIssueReferenceNote = {
+  noteId: string;
+  noteType: NoteType;
+  title: string;
+  updatedAt: string;
+};
+
+export type FocusIssueView = Omit<FocusIssue, "userId" | "referenceNoteIds"> & {
+  referenceNotes: FocusIssueReferenceNote[];
+};
+
+export type FocusIssueResponse = {
+  issue: FocusIssueView | null;
+};
+
+export type UpsertFocusIssuePayload = {
+  character: string;
+  title: string;
+  memo: string;
+  referenceNoteIds: string[];
+};
+
 export type CharacterOption = {
   id: string;
   name: string;

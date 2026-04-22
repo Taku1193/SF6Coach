@@ -1,11 +1,15 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, DeleteCommand, GetCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { getRequiredEnv } from "./env";
-import type { Note } from "@shared/types";
+import type { FocusIssue, Note } from "@shared/types";
 
 type StoredNote = Note & {
   gsi1pk: string;
   gsi1sk: string;
+};
+
+type StoredFocusIssue = FocusIssue & {
+  noteId: string;
 };
 
 // 旧データには isFavorite が存在しないため、読込時に false を補完して互換性を保つ。
@@ -146,4 +150,54 @@ export async function removeNote(userId: string, noteId: string): Promise<boolea
   );
 
   return true;
+}
+
+// 課題はキャラごとに1件だけ持つため、DynamoDB の sort key を固定値にして upsert できるようにする。
+export function buildFocusIssueKey(character: string): string {
+  return `focusIssue#${character}`;
+}
+
+// userId + focusIssue#character で、選択中キャラの現在課題を1件取得する。
+export async function getFocusIssue(userId: string, character: string): Promise<FocusIssue | null> {
+  const command = new GetCommand({
+    TableName: tableName(),
+    Key: {
+      userId,
+      noteId: buildFocusIssueKey(character)
+    }
+  });
+
+  const result = await client.send(command);
+  if (!result.Item) {
+    return null;
+  }
+
+  const item = result.Item as StoredFocusIssue;
+  return {
+    issueId: item.issueId,
+    userId: item.userId,
+    character: item.character,
+    title: item.title,
+    memo: item.memo ?? "",
+    referenceNoteIds: Array.isArray(item.referenceNoteIds) ? item.referenceNoteIds : [],
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt
+  };
+}
+
+// 課題はノート一覧用 GSI に載せず、通常ノート一覧へ混ざらない単独アイテムとして保存する。
+export async function putFocusIssue(issue: FocusIssue): Promise<FocusIssue> {
+  const stored: StoredFocusIssue = {
+    ...issue,
+    noteId: issue.issueId
+  };
+
+  await client.send(
+    new PutCommand({
+      TableName: tableName(),
+      Item: stored
+    })
+  );
+
+  return issue;
 }

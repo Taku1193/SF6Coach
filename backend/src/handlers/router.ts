@@ -1,6 +1,7 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { createBattleRecordNote, createVideoSummaryNote, deleteNoteById, getNoteById, listNotes, updateNoteById, updateNoteFavoriteById } from "../lib/notes-service";
 import { consultWithNotes } from "../lib/consultation-service";
+import { getFocusIssueByCharacter, upsertFocusIssue } from "../lib/focus-issue-service";
 import { badRequest, created, noContent, notFound, ok, serverError, unauthorized } from "../lib/responses";
 import { getAuthenticatedUserId } from "../lib/auth";
 
@@ -86,6 +87,22 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
     if (routeKey === "POST /ai-consultation") {
       const payload = parseBody(event.body);
       const response = await consultWithNotes(userId, payload);
+      return ok(response);
+    }
+
+    if (routeKey === "GET /focus-issue") {
+      const character = event.queryStringParameters?.character;
+      if (!character) {
+        return badRequest("character は必須です。");
+      }
+
+      const response = await getFocusIssueByCharacter(userId, character);
+      return ok(response);
+    }
+
+    if (routeKey === "PUT /focus-issue") {
+      const payload = parseBody(event.body);
+      const response = await upsertFocusIssue(userId, payload);
       return ok(response);
     }
 

@@ -43,6 +43,9 @@ export function Layout({ children, hideNavigation = false }: LayoutProps) {
             <Link className={location.pathname === "/consultation" ? "active" : ""} to="/consultation">
               AI相談
             </Link>
+            <Link className={location.pathname === "/focus-issue" ? "active" : ""} to="/focus-issue">
+              課題
+            </Link>
             <Link className={location.pathname === "/characters" ? "active" : ""} to="/characters">
               キャラ変更
             </Link>

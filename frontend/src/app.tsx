@@ -5,6 +5,7 @@ import { useAuth } from "./components/AuthProvider";
 import { AiConsultationPage } from "./pages/AiConsultationPage";
 import { BattleRecordFormPage } from "./pages/BattleRecordFormPage";
 import { CharacterSelectionPage } from "./pages/CharacterSelectionPage";
+import { FocusIssuePage } from "./pages/FocusIssuePage";
 import { LoginPage } from "./pages/LoginPage";
 import { NoteDetailPage } from "./pages/NoteDetailPage";
 import { NotesListPage } from "./pages/NotesListPage";
@@ -191,6 +192,18 @@ export function App() {
             <RequireCharacter>
               <Layout>
                 <AiConsultationPage />
+              </Layout>
+            </RequireCharacter>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/focus-issue"
+        element={
+          <RequireAuth>
+            <RequireCharacter>
+              <Layout>
+                <FocusIssuePage />
               </Layout>
             </RequireCharacter>
           </RequireAuth>
