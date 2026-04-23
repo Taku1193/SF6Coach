@@ -9,6 +9,28 @@ type ScoredNote = {
   score: number;
 };
 
+type ConsultationDebugNote = {
+  noteId: string;
+  noteType: Note["noteType"];
+  title: string;
+  tags: string[];
+  updatedAt: string;
+};
+
+const OPENAI_API_KEY_CONFIGURATION_MESSAGE =
+  "OpenAI APIキーが設定されていません。管理者はLambda環境変数 OPENAI_API_KEY を確認してください。";
+
+// CloudWatch Logs で相談ごとの抽出状況を追えるよう、本文を含めずに最小限のメタ情報だけへ丸める。
+function summarizeNoteForDebug(note: Note): ConsultationDebugNote {
+  return {
+    noteId: note.noteId,
+    noteType: note.noteType,
+    title: buildNoteTitle(note),
+    tags: note.tags,
+    updatedAt: note.updatedAt
+  };
+}
+
 // 相談文やノート本文を簡易トークンへ分解し、関連度計算に使える形へ揃える。
 function tokenize(text: string): string[] {
   return (text.match(/[A-Za-z0-9\u3040-\u30ff\u4e00-\u9faf._-]+/g) ?? []).map((token) => token.toLowerCase());
@@ -115,10 +137,33 @@ function parseJsonResult(content: string): AiConsultationResponse {
   return result;
 }
 
+// デプロイ用のダミー値や未設定値はfallbackで隠さず、画面へ設定不備として返す。
+function getConfiguredOpenAiApiKey(): string {
+  const apiKey = getRequiredEnv("OPENAI_API_KEY");
+  if (apiKey.startsWith("dummy-")) {
+    throw new Error("OPENAI_API_KEY is not configured.");
+  }
+
+  return apiKey;
+}
+
+// APIキー不備は利用者が同じfallback回答を見続ける原因になるため、OpenAIの通常失敗と分けて扱う。
+function isOpenAiConfigurationError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  const status = typeof error === "object" && error !== null && "status" in error ? (error as { status?: unknown }).status : undefined;
+
+  return (
+    message.includes("OPENAI_API_KEY is required") ||
+    message.includes("OPENAI_API_KEY is not configured") ||
+    message.includes("Incorrect API key") ||
+    status === 401
+  );
+}
+
 // OpenAI API を呼び出し、ノート根拠付きの相談結果を JSON スキーマで受け取る。
 async function askOpenAI(request: AiConsultationRequest, notes: Note[]): Promise<AiConsultationResponse> {
   const client = new OpenAI({
-    apiKey: getRequiredEnv("OPENAI_API_KEY")
+    apiKey: getConfiguredOpenAiApiKey()
   });
 
   const completion = await client.chat.completions.create({
@@ -195,8 +240,23 @@ export async function consultWithNotes(userId: string, input: unknown): Promise<
   const notes = await listNotesByCharacter(userId, request.character);
   const selectedNotes = scoreNotes(request, notes);
 
+  console.log("AI consultation note selection", {
+    userId,
+    character: request.character,
+    opponentCharacter: request.opponentCharacter ?? null,
+    tags: request.tags ?? [],
+    noteTypes: request.noteTypes ?? [],
+    consultationTextLength: request.consultationText.length,
+    totalNotes: notes.length,
+    selectedNotes: selectedNotes.map(summarizeNoteForDebug)
+  });
+
   // 参照ノートがない場合はAIに聞かず、まずノート追加を促す。
   if (selectedNotes.length === 0) {
+    console.log("AI consultation skipped OpenAI because no reference notes were selected", {
+      userId,
+      character: request.character
+    });
     return {
       summary: "条件に合う参考ノートが見つからなかったため、まずは同条件の対戦記録を増やすと整理しやすくなります。",
       improvements: ["相手キャラや課題タグを付けてノートを追加する。"],
@@ -207,13 +267,35 @@ export async function consultWithNotes(userId: string, input: unknown): Promise<
 
   try {
     const response = await askOpenAI(request, selectedNotes);
+    console.log("AI consultation OpenAI succeeded", {
+      userId,
+      character: request.character,
+      selectedNoteCount: selectedNotes.length,
+      referenceNotes: response.referenceNotes
+    });
     return {
       ...response,
       // AIが参考ノート名を返さなかった場合は、実際に渡したノート名で補完する。
       referenceNotes:
         response.referenceNotes.length > 0 ? response.referenceNotes : selectedNotes.map((note) => buildNoteTitle(note))
     };
-  } catch {
+  } catch (error) {
+    if (isOpenAiConfigurationError(error)) {
+      console.error("AI consultation OpenAI configuration error", {
+        userId,
+        character: request.character,
+        selectedNoteCount: selectedNotes.length,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      });
+      throw new Error(OPENAI_API_KEY_CONFIGURATION_MESSAGE);
+    }
+
+    console.error("AI consultation OpenAI failed. Falling back.", {
+      userId,
+      character: request.character,
+      selectedNoteCount: selectedNotes.length,
+      errorMessage: error instanceof Error ? error.message : String(error)
+    });
     return fallbackConsultation(selectedNotes);
   }
 }
