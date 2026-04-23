@@ -46,24 +46,21 @@ export function Layout({ children, hideNavigation = false }: LayoutProps) {
             <Link className={location.pathname === "/focus-issue" ? "active" : ""} to="/focus-issue">
               課題
             </Link>
-            <Link className={location.pathname === "/characters" ? "active" : ""} to="/characters">
-              キャラ変更
-            </Link>
           </nav>
         ) : null}
         <div className="header-meta">
+          {selectedCharacter ? (
+            // 使用キャラ表示自体を導線にし、ヘッダー内の移動先を増やしすぎないようにする。
+            <Link className="character-badge" to="/characters">
+              <span>使用キャラ</span>
+              <strong>{selectedCharacter}</strong>
+            </Link>
+          ) : null}
           {isAuthenticated && session?.email ? (
             // 認証済みユーザー名を右上に寄せ、いま誰のデータを扱っているかを見失わないようにする。
             <div className="user-badge">
               <span>ログイン中</span>
               <strong>{session.email}</strong>
-            </div>
-          ) : null}
-          {selectedCharacter ? (
-            // どの画面でも「今どのキャラのノートを見ているか」を見失わないよう常に表示する。
-            <div className="character-badge">
-              <span>使用キャラ</span>
-              <strong>{selectedCharacter}</strong>
             </div>
           ) : null}
           {isAuthenticated ? (
