@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { buildNoteTitle, isBattleRecordNote, type Note } from "@shared/types";
 import { api } from "../api";
 import { FavoriteButton } from "../components/FavoriteButton";
@@ -13,6 +13,7 @@ type NoteDetailPageProps = {
 // ノート詳細の表示と削除を担当し、editMode 時は種別別の編集フォームへ切り替える。
 export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
   const { noteId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +52,17 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
     return () => {
       cancelled = true;
     };
-  }, [noteId]);
+  }, [editMode, noteId]);
+
+  useEffect(() => {
+    const navigatedNote = (location.state as { note?: Note } | null)?.note;
+    if (!navigatedNote || navigatedNote.noteId !== noteId) {
+      return;
+    }
+
+    // 編集保存直後は遷移元で受け取った最新ノートを先に反映し、詳細画面の体感を早くする。
+    setNote(navigatedNote);
+  }, [location.state, noteId]);
 
   // ユーザー確認後にノートを削除し、一覧画面へ戻す。
   async function handleDelete() {
@@ -70,6 +81,16 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "削除に失敗しました。");
     }
+  }
+
+  // 一覧ボタンとは別に、直前の画面へ戻れる導線を詳細画面にも用意する。
+  function handleBack() {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate("/notes");
   }
 
   // 詳細画面でも同じ API を使い、星の見た目だけ先に変えず保存結果で確定させる。
@@ -112,12 +133,15 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
   return (
     <section className="stack">
       <div className="panel">
-        <div className="section-header">
-          <div>
+        <div className="detail-header">
+          <div className="detail-heading">
             <p className="eyebrow">{note.noteType === "battleRecord" ? "Battle Record" : "Video Summary"}</p>
             <h2>{buildNoteTitle(note)}</h2>
           </div>
-          <div className="button-group">
+          <div className="detail-actions">
+            <button className="secondary-button" onClick={handleBack} type="button">
+              戻る
+            </button>
             <Link className="secondary-button" to={`/notes/${note.noteId}/edit`}>
               編集
             </Link>

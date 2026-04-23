@@ -82,7 +82,7 @@ export function VideoSummaryFormPage(_: VideoSummaryFormPageProps) {
       };
 
       const response = noteId ? await api.updateNote(noteId, payload) : await api.createVideoSummary(payload);
-      navigate(`/notes/${response.note.noteId}`);
+      navigate(`/notes/${response.note.noteId}`, { state: { note: response.note } });
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "保存に失敗しました。");
     } finally {

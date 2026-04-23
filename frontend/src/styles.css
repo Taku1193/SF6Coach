@@ -439,6 +439,28 @@ textarea {
   flex-shrink: 0;
 }
 
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.detail-heading {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.detail-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 12px;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+}
+
 .tag-add-button {
   width: fit-content;
 }
@@ -630,6 +652,16 @@ textarea {
 
   .detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .detail-header {
+    flex-direction: column;
+  }
+
+  .detail-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .reference-option,
