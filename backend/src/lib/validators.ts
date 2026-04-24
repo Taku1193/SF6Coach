@@ -1,6 +1,7 @@
 import type {
   AiConsultationRequest,
   CreateBattleRecordPayload,
+  CreateGeneralNotePayload,
   CreateVideoSummaryPayload,
   UpdateFavoritePayload,
   UpsertFocusIssuePayload,
@@ -89,6 +90,33 @@ export function validateCreateVideoSummaryPayload(input: unknown): CreateVideoSu
   };
 }
 
+// その他ノート作成時の入力を検証し、タイトル必須・メモ必須の payload を返す。
+export function validateCreateGeneralNotePayload(input: unknown): CreateGeneralNotePayload {
+  if (!input || typeof input !== "object") {
+    throw new Error("その他ノートの入力が不正です。");
+  }
+
+  const payload = input as Record<string, unknown>;
+  const character = assertString(payload.character, "character");
+  const title = assertString(payload.title, "title");
+  const memo = assertString(payload.memo, "memo");
+
+  if (!title) {
+    throw new Error("title は必須です。");
+  }
+
+  if (!memo) {
+    throw new Error("memo は必須です。");
+  }
+
+  return {
+    character,
+    title,
+    memo,
+    tags: normalizeTags(payload.tags)
+  };
+}
+
 // 更新 API の入力を partial payload として整形し、未指定項目は undefined で返す。
 export function validateUpdatePayload(input: unknown): UpdateNotePayload {
   if (!input || typeof input !== "object") {
@@ -106,6 +134,8 @@ export function validateUpdatePayload(input: unknown): UpdateNotePayload {
     videoTitle: typeof payload.videoTitle === "string" ? payload.videoTitle.trim() : undefined,
     url: typeof payload.url === "string" ? payload.url.trim() : undefined,
     summary: typeof payload.summary === "string" ? payload.summary.trim() : undefined,
+    title: typeof payload.title === "string" ? payload.title.trim() : undefined,
+    memo: typeof payload.memo === "string" ? payload.memo.trim() : undefined,
     tags: payload.tags === undefined ? undefined : normalizeTags(payload.tags)
   };
 }
@@ -151,7 +181,10 @@ export function validateConsultationPayload(input: unknown): AiConsultationReque
     tags: normalizeTags(payload.tags),
     // noteTypes は許可した値だけを通し、不正な文字列は黙って捨てる。
     noteTypes: Array.isArray(payload.noteTypes)
-      ? payload.noteTypes.filter((value): value is "battleRecord" | "videoSummary" => value === "battleRecord" || value === "videoSummary")
+      ? payload.noteTypes.filter(
+          (value): value is "battleRecord" | "videoSummary" | "general" =>
+            value === "battleRecord" || value === "videoSummary" || value === "general"
+        )
       : undefined
   };
 }

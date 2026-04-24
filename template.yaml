@@ -299,6 +299,12 @@ Resources:
             ApiId: !Ref Sf6CoachApi
             Method: POST
             Path: /notes/video-summary
+        CreateGeneralNote:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Sf6CoachApi
+            Method: POST
+            Path: /notes/general
         UpdateNote:
           Type: HttpApi
           Properties:

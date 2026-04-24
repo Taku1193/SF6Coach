@@ -1,4 +1,4 @@
-export const NOTE_TYPES = ["battleRecord", "videoSummary"] as const;
+export const NOTE_TYPES = ["battleRecord", "videoSummary", "general"] as const;
 
 export type NoteType = (typeof NOTE_TYPES)[number];
 
@@ -29,7 +29,13 @@ export type VideoSummaryNote = BaseNote & {
   summary: string;
 };
 
-export type Note = BattleRecordNote | VideoSummaryNote;
+export type GeneralNote = BaseNote & {
+  noteType: "general";
+  title: string;
+  memo: string;
+};
+
+export type Note = BattleRecordNote | VideoSummaryNote | GeneralNote;
 
 // 作成時 payload はフロントから送る業務入力だけを持ち、noteId などは backend が補完する。
 export type CreateBattleRecordPayload = {
@@ -49,12 +55,20 @@ export type CreateVideoSummaryPayload = {
   tags: string[];
 };
 
+export type CreateGeneralNotePayload = {
+  character: string;
+  title: string;
+  memo: string;
+  tags: string[];
+};
+
 export type UpdateNotePayload = Partial<
   Pick<
     BattleRecordNote,
     "character" | "opponentCharacter" | "result" | "goodPoints" | "improvements" | "tags"
   > &
-    Pick<VideoSummaryNote, "videoTitle" | "url" | "summary">
+    Pick<VideoSummaryNote, "videoTitle" | "url" | "summary"> &
+    Pick<GeneralNote, "title" | "memo">
 >;
 
 export type UpdateFavoritePayload = {
@@ -125,6 +139,29 @@ export function isBattleRecordNote(note: Note): note is BattleRecordNote {
   return note.noteType === "battleRecord";
 }
 
+// Note が videoSummary かどうかを判定し、分岐後に型を絞り込めるようにする。
+export function isVideoSummaryNote(note: Note): note is VideoSummaryNote {
+  return note.noteType === "videoSummary";
+}
+
+// Note が general かどうかを判定し、メモ系ノートの表示と編集を安全に切り替える。
+export function isGeneralNote(note: Note): note is GeneralNote {
+  return note.noteType === "general";
+}
+
+// ノート種別表示の文言はこの関数に寄せ、画面ごとの表記ブレを防ぐ。
+export function getNoteTypeLabel(noteType: NoteType): string {
+  if (noteType === "battleRecord") {
+    return "対戦記録";
+  }
+
+  if (noteType === "videoSummary") {
+    return "動画要約";
+  }
+
+  return "その他ノート";
+}
+
 // ノート種別に応じて、一覧や詳細で使う見出し文字列を組み立てる。
 export function buildNoteTitle(note: Note): string {
   // 一覧や詳細の見出しはこの関数に寄せ、表示ルールを散らさない。
@@ -132,5 +169,9 @@ export function buildNoteTitle(note: Note): string {
     return `${note.opponentCharacter}戦 ${note.result}`;
   }
 
-  return note.videoTitle;
+  if (note.noteType === "videoSummary") {
+    return note.videoTitle;
+  }
+
+  return note.title;
 }

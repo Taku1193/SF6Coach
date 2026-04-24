@@ -1,5 +1,14 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import { createBattleRecordNote, createVideoSummaryNote, deleteNoteById, getNoteById, listNotes, updateNoteById, updateNoteFavoriteById } from "../lib/notes-service";
+import {
+  createBattleRecordNote,
+  createGeneralNote,
+  createVideoSummaryNote,
+  deleteNoteById,
+  getNoteById,
+  listNotes,
+  updateNoteById,
+  updateNoteFavoriteById
+} from "../lib/notes-service";
 import { consultWithNotes } from "../lib/consultation-service";
 import { getFocusIssueByCharacter, upsertFocusIssue } from "../lib/focus-issue-service";
 import { badRequest, created, noContent, notFound, ok, serverError, unauthorized } from "../lib/responses";
@@ -52,6 +61,12 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
     if (routeKey === "POST /notes/video-summary") {
       const payload = parseBody(event.body);
       const note = await createVideoSummaryNote(userId, payload);
+      return created({ note });
+    }
+
+    if (routeKey === "POST /notes/general") {
+      const payload = parseBody(event.body);
+      const note = await createGeneralNote(userId, payload);
       return created({ note });
     }
 

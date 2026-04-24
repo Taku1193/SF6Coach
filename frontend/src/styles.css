@@ -371,6 +371,11 @@ textarea {
   color: #6d5d36;
 }
 
+.note-type.general {
+  background: rgba(55, 101, 132, 0.12);
+  color: #2c5871;
+}
+
 .tag-list {
   display: flex;
   flex-wrap: wrap;

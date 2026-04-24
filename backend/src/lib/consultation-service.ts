@@ -60,7 +60,9 @@ function scoreNotes(request: AiConsultationRequest, notes: Note[]): Note[] {
       const body =
         note.noteType === "battleRecord"
           ? `${note.opponentCharacter} ${note.result} ${note.goodPoints} ${note.improvements}`
-          : `${note.videoTitle} ${note.summary}`;
+          : note.noteType === "videoSummary"
+            ? `${note.videoTitle} ${note.summary}`
+            : `${note.title} ${note.memo}`;
       const noteTokens = new Set(tokenize(body));
       const keywordMatches = requestKeywords.filter((keyword) => noteTokens.has(keyword)).length;
       score += keywordMatches;
@@ -86,6 +88,14 @@ opponentCharacter: ${note.opponentCharacter}
 result: ${note.result}
 goodPoints: ${note.goodPoints}
 improvements: ${note.improvements}
+tags: ${note.tags.join(", ")}`;
+    }
+
+    if (note.noteType === "general") {
+      return `Reference ${index + 1}
+title: ${buildNoteTitle(note)}
+type: general
+memo: ${note.memo}
 tags: ${note.tags.join(", ")}`;
     }
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { buildNoteTitle, type FocusIssueView, type Note, type NoteType } from "@shared/types";
+import { buildNoteTitle, getNoteTypeLabel, type FocusIssueView, type Note, type NoteType } from "@shared/types";
 import { api } from "../api";
 
 const MAX_REFERENCE_NOTES = 3;
@@ -147,7 +147,7 @@ export function FocusIssuePage() {
           <div className="reference-links">
             {selectedReferenceNotes.map((note) => (
               <Link className="reference-link" key={note.noteId} to={`/notes/${note.noteId}`}>
-                <span className={`note-type ${note.noteType}`}>{note.noteType === "battleRecord" ? "対戦記録" : "動画要約"}</span>
+                <span className={`note-type ${note.noteType}`}>{getNoteTypeLabel(note.noteType)}</span>
                 <strong>{buildNoteTitle(note)}</strong>
                 <time>{new Date(note.updatedAt).toLocaleString("ja-JP")}</time>
               </Link>
@@ -206,6 +206,7 @@ export function FocusIssuePage() {
                 <option value="all">すべて</option>
                 <option value="battleRecord">対戦記録</option>
                 <option value="videoSummary">動画要約</option>
+                <option value="general">その他ノート</option>
               </select>
             </label>
             {notes.length === 0 ? (
@@ -225,7 +226,7 @@ export function FocusIssuePage() {
                         onChange={() => handleToggleReference(note.noteId)}
                         type="checkbox"
                       />
-                      <span className={`note-type ${note.noteType}`}>{note.noteType === "battleRecord" ? "対戦記録" : "動画要約"}</span>
+                      <span className={`note-type ${note.noteType}`}>{getNoteTypeLabel(note.noteType)}</span>
                       <strong>{buildNoteTitle(note)}</strong>
                       <time>{new Date(note.updatedAt).toLocaleString("ja-JP")}</time>
                     </label>

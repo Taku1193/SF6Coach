@@ -89,6 +89,9 @@ export function NotesListPage() {
           <Link className="secondary-button" to="/notes/new/battle-record">
             対戦記録を追加
           </Link>
+          <Link className="secondary-button" to="/notes/new/general">
+            その他ノートを追加
+          </Link>
           <Link className="primary-button" to="/notes/new/video-summary">
             動画要約を追加
           </Link>
@@ -102,6 +105,7 @@ export function NotesListPage() {
             <option value="all">すべて</option>
             <option value="battleRecord">対戦記録</option>
             <option value="videoSummary">動画要約</option>
+            <option value="general">その他ノート</option>
           </select>
         </label>
         <label className="field">

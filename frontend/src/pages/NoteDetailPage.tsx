@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { buildNoteTitle, isBattleRecordNote, type Note } from "@shared/types";
+import { buildNoteTitle, getNoteTypeLabel, isBattleRecordNote, isVideoSummaryNote, type Note } from "@shared/types";
 import { api } from "../api";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { BattleRecordFormPage } from "./BattleRecordFormPage";
+import { GeneralNoteFormPage } from "./GeneralNoteFormPage";
 import { VideoSummaryFormPage } from "./VideoSummaryFormPage";
 
 type NoteDetailPageProps = {
@@ -127,7 +128,13 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
 
   if (editMode) {
     // 編集 UI はノート種別ごとに異なるため、詳細画面がそのまま分岐の入口も兼ねる。
-    return note.noteType === "battleRecord" ? <BattleRecordFormPage mode="edit" /> : <VideoSummaryFormPage mode="edit" />;
+    return note.noteType === "battleRecord" ? (
+      <BattleRecordFormPage mode="edit" />
+    ) : note.noteType === "videoSummary" ? (
+      <VideoSummaryFormPage mode="edit" />
+    ) : (
+      <GeneralNoteFormPage mode="edit" />
+    );
   }
 
   return (
@@ -135,7 +142,7 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
       <div className="panel">
         <div className="detail-header">
           <div className="detail-heading">
-            <p className="eyebrow">{note.noteType === "battleRecord" ? "Battle Record" : "Video Summary"}</p>
+            <p className="eyebrow">{getNoteTypeLabel(note.noteType)}</p>
             <h2>{buildNoteTitle(note)}</h2>
           </div>
           <div className="detail-actions">
@@ -195,7 +202,7 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
                 <dd>{note.improvements || "未入力"}</dd>
               </div>
             </>
-          ) : (
+          ) : isVideoSummaryNote(note) ? (
             <>
               <div className="detail-block">
                 <dt>動画タイトル</dt>
@@ -208,6 +215,17 @@ export function NoteDetailPage({ editMode = false }: NoteDetailPageProps) {
               <div className="detail-block">
                 <dt>要約</dt>
                 <dd>{note.summary}</dd>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="detail-block">
+                <dt>タイトル</dt>
+                <dd>{note.title}</dd>
+              </div>
+              <div className="detail-block">
+                <dt>メモ</dt>
+                <dd>{note.memo}</dd>
               </div>
             </>
           )}

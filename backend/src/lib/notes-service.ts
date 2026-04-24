@@ -2,14 +2,22 @@ import { v4 as uuidv4 } from "uuid";
 import type {
   BattleRecordNote,
   CreateBattleRecordPayload,
+  CreateGeneralNotePayload,
   CreateVideoSummaryPayload,
+  GeneralNote,
   Note,
   UpdateFavoritePayload,
   UpdateNotePayload,
   VideoSummaryNote
 } from "@shared/types";
 import { getNote, listNotesByCharacter, putNote, removeNote, updatePersistedNote } from "./repository";
-import { validateCreateBattleRecordPayload, validateCreateVideoSummaryPayload, validateFavoritePayload, validateUpdatePayload } from "./validators";
+import {
+  validateCreateBattleRecordPayload,
+  validateCreateGeneralNotePayload,
+  validateCreateVideoSummaryPayload,
+  validateFavoritePayload,
+  validateUpdatePayload
+} from "./validators";
 
 // 指定キャラに紐づくノート一覧を repository から取得して返す。
 export async function listNotes(userId: string, character: string, favoriteOnly = false): Promise<Note[]> {
@@ -58,6 +66,23 @@ export async function createVideoSummaryNote(userId: string, input: unknown): Pr
   return (await putNote(note)) as VideoSummaryNote;
 }
 
+// その他ノートを新規作成し、自由メモ用途でも既存ノートと同じ保存ルールへ揃える。
+export async function createGeneralNote(userId: string, input: unknown): Promise<GeneralNote> {
+  const payload: CreateGeneralNotePayload = validateCreateGeneralNotePayload(input);
+  const now = new Date().toISOString();
+  const note: GeneralNote = {
+    noteId: uuidv4(),
+    userId,
+    noteType: "general",
+    isFavorite: false,
+    createdAt: now,
+    updatedAt: now,
+    ...payload
+  };
+
+  return (await putNote(note)) as GeneralNote;
+}
+
 // 既存ノートの種別を維持したまま、更新可能な項目だけを上書きして保存する。
 export async function updateNoteById(userId: string, noteId: string, input: unknown): Promise<Note | null> {
   const existing = await getNote(userId, noteId);
@@ -80,15 +105,24 @@ export async function updateNoteById(userId: string, noteId: string, input: unkn
           tags: payload.tags ?? existing.tags,
           updatedAt: now
         }
-      : {
-          ...existing,
-          character: payload.character ?? existing.character,
-          videoTitle: payload.videoTitle ?? existing.videoTitle,
-          url: payload.url ?? existing.url,
-          summary: payload.summary ?? existing.summary,
-          tags: payload.tags ?? existing.tags,
-          updatedAt: now
-        };
+      : existing.noteType === "videoSummary"
+        ? {
+            ...existing,
+            character: payload.character ?? existing.character,
+            videoTitle: payload.videoTitle ?? existing.videoTitle,
+            url: payload.url ?? existing.url,
+            summary: payload.summary ?? existing.summary,
+            tags: payload.tags ?? existing.tags,
+            updatedAt: now
+          }
+        : {
+            ...existing,
+            character: payload.character ?? existing.character,
+            title: payload.title ?? existing.title,
+            memo: payload.memo ?? existing.memo,
+            tags: payload.tags ?? existing.tags,
+            updatedAt: now
+          };
 
   return updatePersistedNote(updated);
 }

@@ -6,6 +6,7 @@ import { AiConsultationPage } from "./pages/AiConsultationPage";
 import { BattleRecordFormPage } from "./pages/BattleRecordFormPage";
 import { CharacterSelectionPage } from "./pages/CharacterSelectionPage";
 import { FocusIssuePage } from "./pages/FocusIssuePage";
+import { GeneralNoteFormPage } from "./pages/GeneralNoteFormPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NoteDetailPage } from "./pages/NoteDetailPage";
 import { NotesListPage } from "./pages/NotesListPage";
@@ -156,6 +157,18 @@ export function App() {
             <RequireCharacter>
               <Layout>
                 <VideoSummaryFormPage mode="create" />
+              </Layout>
+            </RequireCharacter>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/notes/new/general"
+        element={
+          <RequireAuth>
+            <RequireCharacter>
+              <Layout>
+                <GeneralNoteFormPage mode="create" />
               </Layout>
             </RequireCharacter>
           </RequireAuth>

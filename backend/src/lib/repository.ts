@@ -90,7 +90,7 @@ export async function updatePersistedNote(note: Note): Promise<Note> {
       },
       // UpdateExpression の左辺に予約語が含まれても壊れないよう、属性名はすべてエイリアス化する。
       UpdateExpression:
-        "SET #character = :character, #noteType = :noteType, #isFavorite = :isFavorite, #tags = :tags, #createdAt = :createdAt, #updatedAt = :updatedAt, #gsi1pk = :gsi1pk, #gsi1sk = :gsi1sk, #opponentCharacter = :opponentCharacter, #result = :result, #goodPoints = :goodPoints, #improvements = :improvements, #videoTitle = :videoTitle, #url = :url, #summary = :summary",
+        "SET #character = :character, #noteType = :noteType, #isFavorite = :isFavorite, #tags = :tags, #createdAt = :createdAt, #updatedAt = :updatedAt, #gsi1pk = :gsi1pk, #gsi1sk = :gsi1sk, #opponentCharacter = :opponentCharacter, #result = :result, #goodPoints = :goodPoints, #improvements = :improvements, #videoTitle = :videoTitle, #url = :url, #summary = :summary, #title = :title, #memo = :memo",
       ExpressionAttributeNames: {
         "#character": "character",
         "#noteType": "noteType",
@@ -106,7 +106,9 @@ export async function updatePersistedNote(note: Note): Promise<Note> {
         "#improvements": "improvements",
         "#videoTitle": "videoTitle",
         "#url": "url",
-        "#summary": "summary"
+        "#summary": "summary",
+        "#title": "title",
+        "#memo": "memo"
       },
       ExpressionAttributeValues: {
         ":character": stored.character,
@@ -123,7 +125,9 @@ export async function updatePersistedNote(note: Note): Promise<Note> {
         ":improvements": "improvements" in stored ? stored.improvements : null,
         ":videoTitle": "videoTitle" in stored ? stored.videoTitle : null,
         ":url": "url" in stored ? stored.url : null,
-        ":summary": "summary" in stored ? stored.summary : null
+        ":summary": "summary" in stored ? stored.summary : null,
+        ":title": "title" in stored ? stored.title : null,
+        ":memo": "memo" in stored ? stored.memo : null
       }
     })
   );

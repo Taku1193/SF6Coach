@@ -84,8 +84,7 @@ export function AiConsultationPage() {
       setError("");
       // 相談ごとに前回結果を消し、ローディング中に古い内容が残らないようにする。
       setResponse(null);
-      const noteTypes: NoteType[] =
-        noteTypeScope === "both" ? ["battleRecord", "videoSummary"] : [noteTypeScope];
+      const noteTypes: NoteType[] = noteTypeScope === "both" ? ["battleRecord", "videoSummary", "general"] : [noteTypeScope];
       const result = await api.consult({
         character: selectedCharacter,
         opponentCharacter: opponentCharacter.trim() || undefined,
@@ -172,9 +171,10 @@ export function AiConsultationPage() {
           <label className="field">
             <span>参照ノート種別</span>
             <select value={noteTypeScope} onChange={(event) => setNoteTypeScope(event.target.value as "both" | NoteType)}>
-              <option value="both">両方</option>
+              <option value="both">すべて</option>
               <option value="battleRecord">対戦記録のみ</option>
               <option value="videoSummary">動画要約のみ</option>
+              <option value="general">その他ノートのみ</option>
             </select>
           </label>
           {error ? <div className="status error">{error}</div> : null}

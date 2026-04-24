@@ -2,6 +2,7 @@ import type {
   AiConsultationRequest,
   AiConsultationResponse,
   CreateBattleRecordPayload,
+  CreateGeneralNotePayload,
   CreateVideoSummaryPayload,
   FocusIssueResponse,
   Note,
@@ -93,6 +94,12 @@ export const api = {
   },
   createVideoSummary(payload: CreateVideoSummaryPayload) {
     return request<{ note: Note }>("/notes/video-summary", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+  },
+  createGeneralNote(payload: CreateGeneralNotePayload) {
+    return request<{ note: Note }>("/notes/general", {
       method: "POST",
       body: JSON.stringify(payload)
     });

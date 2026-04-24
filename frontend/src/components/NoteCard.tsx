@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { buildNoteTitle, type Note } from "@shared/types";
+import { buildNoteTitle, getNoteTypeLabel, type Note } from "@shared/types";
 import { FavoriteButton } from "./FavoriteButton";
 
 type NoteCardProps = {
@@ -14,7 +14,7 @@ export function NoteCard({ note, onToggleFavorite, favoriteDisabled = false }: N
     <article className="note-card">
       <Link className="note-card-link" to={`/notes/${note.noteId}`}>
         <div className="note-card-top">
-          <span className={`note-type ${note.noteType}`}>{note.noteType === "battleRecord" ? "対戦記録" : "動画要約"}</span>
+          <span className={`note-type ${note.noteType}`}>{getNoteTypeLabel(note.noteType)}</span>
           <time>{new Date(note.updatedAt).toLocaleString("ja-JP")}</time>
         </div>
         <h3>{buildNoteTitle(note)}</h3>
